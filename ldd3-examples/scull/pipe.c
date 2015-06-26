@@ -207,7 +207,8 @@ static ssize_t scull_p_write(struct file *filp, const char __user *buf, size_t c
 		count = min(count, (size_t)(dev->end - dev->wp)); /* to end-of-buf */
 	else /* the write pointer has wrapped, fill up to rp-1 */
 		count = min(count, (size_t)(dev->rp - dev->wp - 1));
-	PDEBUG("Going to accept %li bytes to %p from %p\n", (long)count, dev->wp, buf);
+	PDEBUG("Going to accept %li bytes to %p from %p\n", (long)count, 
+                                                       dev->wp, buf);
 	if (copy_from_user(dev->wp, buf, count)) {
 		mutex_unlock (&dev->mutex);
 		return -EFAULT;
@@ -275,7 +276,8 @@ static int scull_read_p_mem_proc_show(struct seq_file *m, void *v)
 			return -ERESTARTSYS;
 		seq_printf(m, "\nDevice %i: %p\n", i, p);
 /*		seq_printf(m, "   Queues: %p %p\n", p->inq, p->outq);*/
-		seq_printf(m, "   Buffer: %p to %p (%i bytes)\n", p->buffer, p->end, p->buffersize);
+		seq_printf(m, "   Buffer: %p to %p (%i bytes)\n", p->buffer, p->end, 
+                                                        p->buffersize);
 		seq_printf(m, "   rp %p   wp %p\n", p->rp, p->wp);
 		seq_printf(m, "   readers %i   writers %i\n", p->nreaders, p->nwriters);
 		mutex_unlock(&p->mutex);
@@ -349,7 +351,8 @@ int scull_p_init(dev_t firstdev)
 		return 0;
 	}
 	scull_p_devno = firstdev;
-	scull_p_devices = kmalloc(scull_p_nr_devs * sizeof(struct scull_pipe), GFP_KERNEL);
+	scull_p_devices = kmalloc(scull_p_nr_devs * sizeof(struct scull_pipe), 
+                                               GFP_KERNEL);
 	if (scull_p_devices == NULL) {
 		unregister_chrdev_region(firstdev, scull_p_nr_devs);
 		return 0;

@@ -311,7 +311,7 @@ ssize_t scull_read(struct file *filp, char __user *buf, size_t count,
 
 	if (mutex_lock_interruptible(&dev->mutex))
 		return -ERESTARTSYS;
-	if (*f_pos >= dev->size)
+	if (*f_pos >= dev->size) // if gone past EOF
 		goto out;
 	if (*f_pos + count > dev->size)
 		count = dev->size - *f_pos;

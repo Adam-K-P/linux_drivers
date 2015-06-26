@@ -1,0 +1,1 @@
+cmd_/home/adam/Work/drivers/ldd3-examples/scull/scull.o := ld -m elf_x86_64   -r -o /home/adam/Work/drivers/ldd3-examples/scull/scull.o /home/adam/Work/drivers/ldd3-examples/scull/main.o /home/adam/Work/drivers/ldd3-examples/scull/pipe.o /home/adam/Work/drivers/ldd3-examples/scull/access.o 
