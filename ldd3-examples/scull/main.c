@@ -230,6 +230,23 @@ int scull_release(struct inode *inode, struct file *filp)
 {
 	return 0;
 }
+
+/* Helper function for scull_follow 
+   Acts more intelligently than previous implementation
+   Will not fail when kmalloc cannot service it 
+*/
+static void malloc_qs(struct scull_qset *qs) {
+        while(1) {
+                if (qs->next == NULL) {
+                        qs->next = kmalloc(sizeof(struct scull_qset),
+                                                         GFP_KERNEL);
+                        continue;
+                }
+                memset(qs->next, 0, sizeof(struct scull_qset));
+                break;
+        }
+}
+
 /*
  * Follow the list
  */
@@ -238,28 +255,16 @@ struct scull_qset *scull_follow(struct scull_dev *dev, int n)
 	struct scull_qset *qs = dev->data;
 
         /* Allocate first qset explicitly if need be */
-	if (qs == NULL) {
-		qs = dev->data = kmalloc(sizeof(struct scull_qset), GFP_KERNEL);
-		if (qs == NULL)
-			return NULL;  /* Never mind */
-		memset(qs, 0, sizeof(struct scull_qset));
-	}
+	if (qs == NULL) malloc_qs(qs);
 
 	/* Then follow the list */
 	while (n-- != 0) {
-                while(1) {
-                        if (qs->next == NULL) {
-                                qs->next = kmalloc(sizeof(struct scull_qset),
-                                                                  GFP_KERNEL);
-                                continue;
-                         }
-                         memset(qs->next, 0, sizeof(struct scull_qset));
-                         break;
-                }
+                malloc_qs(qs);
 		qs = qs->next;
 	}
 	return qs;
 }
+
 
 /*
  * Data management: read and write
