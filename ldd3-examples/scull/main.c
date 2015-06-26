@@ -238,7 +238,7 @@ struct scull_qset *scull_follow(struct scull_dev *dev, int n)
 	struct scull_qset *qs = dev->data;
 
         /* Allocate first qset explicitly if need be */
-	if (! qs) {
+	if (qs == NULL) {
 		qs = dev->data = kmalloc(sizeof(struct scull_qset), GFP_KERNEL);
 		if (qs == NULL)
 			return NULL;  /* Never mind */
@@ -246,15 +246,17 @@ struct scull_qset *scull_follow(struct scull_dev *dev, int n)
 	}
 
 	/* Then follow the list */
-	while (n--) {
-		if (!qs->next) {
-			qs->next = kmalloc(sizeof(struct scull_qset), GFP_KERNEL);
-			if (qs->next == NULL)
-				return NULL;  /* Never mind */
-			memset(qs->next, 0, sizeof(struct scull_qset));
-		}
+	while (n-- != 0) {
+                while(1) {
+                        if (qs->next == NULL) {
+                                qs->next = kmalloc(sizeof(struct scull_qset),
+                                                                  GFP_KERNEL);
+                                continue;
+                         }
+                         memset(qs->next, 0, sizeof(struct scull_qset));
+                         break;
+                }
 		qs = qs->next;
-		continue;
 	}
 	return qs;
 }
