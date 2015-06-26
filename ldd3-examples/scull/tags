@@ -7,9 +7,9 @@
 DEBFLAGS	Makefile	/^  DEBFLAGS = -O -g -DSCULL_DEBUG # "-O" is needed to expand inlines$/;"	m
 DEBFLAGS	Makefile	/^  DEBFLAGS = -O2$/;"	m
 DEFINE_PROC_SEQ_FILE	main.c	201;"	d	file:
-DEFINE_PROC_SEQ_FILE	pipe.c	286;"	d	file:
+DEFINE_PROC_SEQ_FILE	pipe.c	288;"	d	file:
 KERNELDIR	Makefile	/^KERNELDIR ?= \/lib\/modules\/$(shell uname -r)\/build$/;"	m
-LIMIT	pipe.c	270;"	d	file:
+LIMIT	pipe.c	271;"	d	file:
 NUM	scull.h	101;"	d
 PDEBUG	scull.h	27;"	d
 PDEBUG	scull.h	31;"	d
@@ -53,14 +53,18 @@ buffer	pipe.c	/^        char *buffer, *end;                \/* begin of buf, end
 buffersize	pipe.c	/^        int buffersize;                    \/* used in pointer arithmetic *\/$/;"	m	struct:scull_pipe	file:
 cdev	pipe.c	/^        struct cdev cdev;                  \/* Char device structure *\/$/;"	m	struct:scull_pipe	typeref:struct:scull_pipe::cdev	file:
 cdev	scull.h	/^	struct cdev cdev;	  \/* Char device structure		*\/$/;"	m	struct:scull_dev	typeref:struct:scull_dev::cdev
+create_files	scull.init	/^function create_files () {$/;"	f
 data	scull.h	/^	struct scull_qset *data;  \/* Pointer to first quantum set *\/$/;"	m	struct:scull_dev	typeref:struct:scull_dev::scull_qset
 data	scull.h	/^	void **data;$/;"	m	struct:scull_qset
 device	access.c	/^	struct scull_dev device;$/;"	m	struct:scull_listitem	typeref:struct:scull_listitem::scull_dev	file:
+device_specific_post_load	scull.init	/^function device_specific_post_load () {$/;"	f
+device_specific_pre_unload	scull.init	/^function device_specific_pre_unload () {$/;"	f
 end	pipe.c	/^        char *buffer, *end;                \/* begin of buf, end of buf *\/$/;"	m	struct:scull_pipe	file:
 fops	access.c	/^	struct file_operations *fops;$/;"	m	struct:scull_adev_info	typeref:struct:scull_adev_info::file_operations	file:
 inq	pipe.c	/^        wait_queue_head_t inq, outq;       \/* read and write queues *\/$/;"	m	struct:scull_pipe	file:
 key	access.c	/^	dev_t key;$/;"	m	struct:scull_listitem	file:
 list	access.c	/^	struct list_head list;$/;"	m	struct:scull_listitem	typeref:struct:scull_listitem::list_head	file:
+load_device	scull.init	/^function load_device () {$/;"	f
 mutex	pipe.c	/^        struct mutex mutex;              \/* mutual exclusion semaphore *\/$/;"	m	struct:scull_pipe	typeref:struct:scull_pipe::mutex	file:
 mutex	scull.h	/^	struct mutex mutex;     \/* mutual exclusion semaphore     *\/$/;"	m	struct:scull_dev	typeref:struct:scull_dev::mutex
 name	access.c	/^	char *name;$/;"	m	struct:scull_adev_info	file:
@@ -71,6 +75,7 @@ obj-m	Makefile	/^obj-m	:= scull.o$/;"	m
 outq	pipe.c	/^        wait_queue_head_t inq, outq;       \/* read and write queues *\/$/;"	m	struct:scull_pipe	file:
 qset	scull.h	/^	int qset;                 \/* the current array size *\/$/;"	m	struct:scull_dev
 quantum	scull.h	/^	int quantum;              \/* the current quantum size *\/$/;"	m	struct:scull_dev
+remove_files	scull.init	/^function remove_files () {$/;"	f
 rp	pipe.c	/^        char *rp, *wp;                     \/* where to read, where to write *\/$/;"	m	struct:scull_pipe	file:
 scull-objs	Makefile	/^scull-objs := main.o pipe.o access.o$/;"	m
 scull_a_firstdev	access.c	/^static dev_t scull_a_firstdev;  \/* Where our range begins *\/$/;"	v	file:
@@ -154,4 +159,5 @@ scull_wusr_fops	access.c	/^struct file_operations scull_wusr_fops = {$/;"	v	type
 sculldev	access.c	/^	struct scull_dev *sculldev;$/;"	m	struct:scull_adev_info	typeref:struct:scull_adev_info::scull_dev	file:
 size	scull.h	/^	unsigned long size;       \/* amount of data stored here *\/$/;"	m	struct:scull_dev
 spacefree	pipe.c	/^static int spacefree(struct scull_pipe *dev)$/;"	f	file:
+unload_device	scull.init	/^function unload_device () {$/;"	f
 wp	pipe.c	/^        char *rp, *wp;                     \/* where to read, where to write *\/$/;"	m	struct:scull_pipe	file:

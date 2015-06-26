@@ -64,7 +64,7 @@ int scull_trim(struct scull_dev *dev)
 	int qset = dev->qset;   /* "dev" is not-null */
 	int i;
 
-	for (dptr = dev->data; dptr; dptr = next) { /* all the list items */
+	for (dptr = dev->data; dptr != NULL; dptr = next) { /* all the list items */
 		if (dptr->data) {
 			for (i = 0; i < qset; i++)
 				kfree(dptr->data[i]);
@@ -81,38 +81,6 @@ int scull_trim(struct scull_dev *dev)
 	return 0;
 }
 #ifdef SCULL_DEBUG /* use proc only if debugging */
-/*
- * The proc filesystem: function to read and entry
- */
-
-static int scull_read_mem_proc_show(struct seq_file *m, void *v)
-{
-	int i, j;
-	int limit = m->size - 80; /* Don't print more than this */
-
-	for (i = 0; i < scull_nr_devs && m->count <= limit; i++) {
-		struct scull_dev *d = &scull_devices[i];
-		struct scull_qset *qs = d->data;
-		if (mutex_lock_interruptible(&d->mutex))
-			return -ERESTARTSYS;
-		seq_printf(m,"\nDevice %i: qset %i, q %i, sz %li\n",
-				i, d->qset, d->quantum, d->size);
-		for (; qs && m->count <= limit; qs = qs->next) { /* scan the list */
-			seq_printf(m, "  item at %p, qset at %p\n",
-					qs, qs->data);
-			if (qs->data && !qs->next) /* dump only the last item */
-				for (j = 0; j < d->qset; j++) {
-					if (qs->data[j])
-						seq_printf(m,
-								"    % 4i: %8p\n",
-								j, qs->data[j]);
-				}
-		}
-		mutex_unlock(&scull_devices[i].mutex);
-	}
-	return 0;
-}
-
 
 /*
  * For now, the seq_file implementation will exist in parallel.  The
@@ -236,10 +204,6 @@ static void scull_remove_proc(void)
 }
 
 #endif /* SCULL_DEBUG */
-
-
-
-
 
 /*
  * Open and close
