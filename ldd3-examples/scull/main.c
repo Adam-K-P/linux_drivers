@@ -235,6 +235,7 @@ int scull_release(struct inode *inode, struct file *filp)
    Acts more intelligently than previous implementation
    Will not fail when kmalloc cannot service it 
 */
+
 static void malloc_qs(struct scull_qset *qs) {
         while(1) {
                 if (qs->next == NULL) {
@@ -250,6 +251,7 @@ static void malloc_qs(struct scull_qset *qs) {
 /*
  * Follow the list
  */
+
 struct scull_qset *scull_follow(struct scull_dev *dev, int n)
 {
 	struct scull_qset *qs = dev->data;
@@ -264,7 +266,6 @@ struct scull_qset *scull_follow(struct scull_dev *dev, int n)
 	}
 	return qs;
 }
-
 
 /*
  * Data management: read and write
@@ -295,7 +296,7 @@ ssize_t scull_read(struct file *filp, char __user *buf, size_t count,
 	/* follow the list up to the right position (defined elsewhere) */
 	dptr = scull_follow(dev, item);
 
-	if (dptr == NULL || !dptr->data || ! dptr->data[s_pos])
+	if (dptr == NULL || dptr->data == NULL || dptr->data[s_pos] == NULL)
 		goto out; /* don't fill holes */
 
 	/* read only up to the end of this quantum */
@@ -336,13 +337,13 @@ ssize_t scull_write(struct file *filp, const char __user *buf, size_t count,
 	dptr = scull_follow(dev, item);
 	if (dptr == NULL)
 		goto out;
-	if (!dptr->data) {
+	if (dptr->data == NULL) {
 		dptr->data = kmalloc(qset * sizeof(char *), GFP_KERNEL);
 		if (!dptr->data)
 			goto out;
 		memset(dptr->data, 0, qset * sizeof(char *));
 	}
-	if (!dptr->data[s_pos]) {
+	if (dptr->data[s_pos] == NULL) {
 		dptr->data[s_pos] = kmalloc(quantum, GFP_KERNEL);
 		if (!dptr->data[s_pos])
 			goto out;
@@ -620,9 +621,10 @@ int scull_init_module(void)
 	 * can be specified at load time
 	 */
 	scull_devices = kmalloc(scull_nr_devs * sizeof(struct scull_dev), GFP_KERNEL);
-	if (!scull_devices) {
+	if (scull_devices == NULL) {
 		result = -ENOMEM;
-		goto fail;  /* Make this more graceful */
+                scull_cleanup_module();
+                return result;
 	}
 	memset(scull_devices, 0, scull_nr_devs * sizeof(struct scull_dev));
 
@@ -644,10 +646,6 @@ int scull_init_module(void)
 #endif
 
 	return 0; /* succeed */
-
-  fail:
-	scull_cleanup_module();
-	return result;
 }
 
 module_init(scull_init_module);
