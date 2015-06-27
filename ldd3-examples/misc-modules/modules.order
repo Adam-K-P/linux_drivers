@@ -1,0 +1,11 @@
+kernel//home/adam/Work/drivers/ldd3-examples/misc-modules/hello.ko
+kernel//home/adam/Work/drivers/ldd3-examples/misc-modules/hellop.ko
+kernel//home/adam/Work/drivers/ldd3-examples/misc-modules/seq.ko
+kernel//home/adam/Work/drivers/ldd3-examples/misc-modules/jit.ko
+kernel//home/adam/Work/drivers/ldd3-examples/misc-modules/jiq.ko
+kernel//home/adam/Work/drivers/ldd3-examples/misc-modules/sleepy.ko
+kernel//home/adam/Work/drivers/ldd3-examples/misc-modules/complete.ko
+kernel//home/adam/Work/drivers/ldd3-examples/misc-modules/silly.ko
+kernel//home/adam/Work/drivers/ldd3-examples/misc-modules/faulty.ko
+kernel//home/adam/Work/drivers/ldd3-examples/misc-modules/kdatasize.ko
+kernel//home/adam/Work/drivers/ldd3-examples/misc-modules/kdataalign.ko

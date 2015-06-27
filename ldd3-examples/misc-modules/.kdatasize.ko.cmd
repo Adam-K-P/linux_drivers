@@ -1,0 +1,1 @@
+cmd_/home/adam/Work/drivers/ldd3-examples/misc-modules/kdatasize.ko := ld -r -m elf_x86_64 -T /usr/src/linux-headers-3.16.0-4-common/scripts/module-common.lds --build-id  -o /home/adam/Work/drivers/ldd3-examples/misc-modules/kdatasize.ko /home/adam/Work/drivers/ldd3-examples/misc-modules/kdatasize.o /home/adam/Work/drivers/ldd3-examples/misc-modules/kdatasize.mod.o
