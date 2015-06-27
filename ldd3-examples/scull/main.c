@@ -192,7 +192,7 @@ static void scull_create_proc(void)
 			NULL /* parent dir */, &scull_read_mem_proc_fops);
 	entry = proc_create("scullseq", 0, NULL, &scull_proc_ops);
 	if (!entry) {
-		printk(KERN_WARNING "proc_create scullseq failed\n");
+		printk(KERN_NOTICE "proc_create scullseq failed\n");
     }
 }
 
@@ -233,7 +233,6 @@ int scull_release(struct inode *inode, struct file *filp)
 
 /* Helper function for scull_follow 
    Acts more intelligently than previous implementation
-   Will not fail when kmalloc cannot service it 
 */
 
 static void malloc_qs(struct scull_qset *qs) {
@@ -241,7 +240,11 @@ static void malloc_qs(struct scull_qset *qs) {
                 if (qs->next == NULL) {
                         qs->next = kmalloc(sizeof(struct scull_qset),
                                                          GFP_KERNEL);
-                        continue;
+                        /* if kmalloc somehow fails */
+                        if (qs->next == NULL) {
+                           printk(KERN_WARNING "kmalloc failed to allocate memory");
+                           return;
+                        }
                 }
                 memset(qs->next, 0, sizeof(struct scull_qset));
                 break;
