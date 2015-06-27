@@ -15,7 +15,9 @@
 
 #include <asm/uaccess.h>	/* copy_*_user */
 
-#include "scull.h"		/* local definitions */
+//#include "scull.h"		/* local definitions */
+
+#define NR_OF_DEVICES 4
 
 MODULE_LICENSE("Dual BSD/GPL");
 
@@ -26,21 +28,30 @@ int scull_nr_devs = SCULL_NR_DEVS;
 int scull_quantum = SCULL_QUANTUM;
 int scull_qset = SCULL_QSET; */
 
+struct dev_t *dev;
+unsigned int count = 4;
+
 struct file_operations scull_fops = {
    .owner = THIS_MODULE,
 };
 
 static void __exit scull_clean(void)
 {
-   printk(KERN_ALERT "yo\n");
-
+   unregister_chrdev_region(dev, count, "scull");
+   printk(KERN_ALERT "chrdev region deallocated\n");
 }
 
 static int __init scull_init(void)
 {
+   printk(KERN_EMERG "fucntion begin\n");
+   //unsigned int firstminor = 0;
+   //int alloc_chrdev_region(dev, firstminor, count, "scull"); 
+   printk(KERN_ALERT "chrdev region allocated\n");
+   //struct cdev *my_cdev = cdev_alloc();
    return 0;
 }
 
+sadasd
 module_init(scull_init);
 module_exit(scull_clean);
 
