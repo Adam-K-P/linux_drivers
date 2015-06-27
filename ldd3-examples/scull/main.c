@@ -236,19 +236,19 @@ int scull_release(struct inode *inode, struct file *filp)
 */
 
 static void malloc_qs(struct scull_qset *qs) {
-        while(1) {
-                if (qs->next == NULL) {
-                        qs->next = kmalloc(sizeof(struct scull_qset),
-                                                         GFP_KERNEL);
-                        /* if kmalloc somehow fails */
-                        if (qs->next == NULL) {
-                           printk(KERN_WARNING "kmalloc failed to allocate memory");
-                           return;
-                        }
-                }
-                memset(qs->next, 0, sizeof(struct scull_qset));
-                break;
+  while(1) {
+     if(qs->next == NULL) {
+        qs->next = kmalloc(sizeof(struct scull_qset),
+                                          GFP_KERNEL);
+        /* if kmalloc somehow fails */
+        if(qs->next == NULL) {
+           printk(KERN_WARNING "kmalloc failed to allocate memory");
+                 return;
         }
+     }
+   memset(qs->next, 0, sizeof(struct scull_qset));
+   break;
+   }
 }
 
 /*
