@@ -41,9 +41,9 @@ struct scull_qset {
 
 int scull_open(struct inode *inode, struct file *filp)
 {
-   struct scull_dev *dev;
-   dev = container_of(inode->i_cdev, struct scull_dev, cdev);
-   filp->private_data = dev;
+   struct scull_dev *sdev;
+   sdev = container_of(inode->i_cdev, struct scull_dev, cdev);
+   filp->private_data = sdev;
    return 0;
 }
 
@@ -52,10 +52,19 @@ int scull_release(struct inode *inode, struct file *filp)
    return 0;
 }
 
-/*ssize_t scull_read(struct file *filp, char __user *buf, size_t count,
+ssize_t scull_read(struct file *filp, char __user *buf, size_t count,
                    loff_t *f_pos)
 {
-}*/
+   struct scull_dev  *sdev = filp->private_data;
+   struct scull_qset *dptr;
+   int quantum, qset;
+   int itemsize, item, spos, qpos, rest;
+   ssize_t retval = 0;
+   quantum = sdev->quantum;
+   qset    = sdev->qset;
+   itemsize = quantum * qset;
+   return retval;
+}
 
 
 struct file_operations scull_fops = {
@@ -87,7 +96,11 @@ static int __init scull_init(void)
    struct scull_dev sdev;
    dev_t dev = 0;
    int result;
+   sdev.quantum = QUANTUM;
+   sdev.qset    = QSET;
    result = alloc_chrdev_region(&dev, 0, 1, "scull");
+   scull_major = MAJOR(dev);
+   printk(KERN_ALERT "major number is %d\n", scull_major);
    if (result < 0) {
       printk(KERN_WARNING "scull: can't get major\n"); 
       return result;
