@@ -41,10 +41,10 @@ struct scull_qset {
 
 int scull_open(struct inode *inode, struct file *filp)
 {
-   struct scull_dev *sdev;
-   printk(KERN_WARNING "omg it opened\n");
-   sdev = container_of(inode->i_cdev, struct scull_dev, cdev);
-   filp->private_data = sdev;
+   //struct scull_dev *sdev;
+   //printk(KERN_WARNING "omg it opened\n");
+   //sdev = container_of(inode->i_cdev, struct scull_dev, cdev);
+   //filp->private_data = sdev;
    return 0;
 }
 
@@ -56,15 +56,22 @@ int scull_release(struct inode *inode, struct file *filp)
 ssize_t scull_read(struct file *filp, char __user *buf, size_t count,
                    loff_t *f_pos)
 {
-   struct scull_dev  *sdev = filp->private_data;
+   //struct scull_dev  *sdev = filp->private_data;
    //struct scull_qset *dptr;
-   int quantum, qset;
+   //int quantum, qset;
    //int itemsize, item, spos, qpos, rest;
-   ssize_t retval = 0;
-   quantum = sdev->quantum;
-   qset    = sdev->qset;
+   //ssize_t retval = 0;
+   //quantum = sdev->quantum;
+   //qset    = sdev->qset;
    //itemsize = quantum * qset;
-   return retval;
+   //return retval;
+   return 0;
+}
+
+ssize_t scull_write(struct file *filp, const char __user *buf, size_t count,
+                    loff_t *f_pos)
+{
+   return 0;
 }
 
 
@@ -73,6 +80,7 @@ struct file_operations scull_fops = {
    .open    = scull_open,
    .read    = scull_read,
    .release = scull_release,
+   .write   = scull_write,
 };
 
 static void __exit scull_clean(void)
