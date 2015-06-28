@@ -19,34 +19,58 @@
 
 MODULE_LICENSE("Dual BSD/GPL");
 
-
-/* int scull_major = SCULL_MAJOR;
-int scull_minor = 0;
-int scull_nr_devs = SCULL_NR_DEVS;
-int scull_quantum = SCULL_QUANTUM;
-int scull_qset = SCULL_QSET; */
-
-unsigned int count = 4;
-unsigned int firstminor = 0;
+unsigned int count = 1;
 dev_t dev = 0;
+struct cdev *my_cdev;
+
+int scull_open(struct inode *inode, struct file *filp)
+{
+   return 0;
+}
+
+int scull_release(struct inode *inode, struct file *filp)
+{
+   return 0;
+}
 
 struct file_operations scull_fops = {
-   .owner = THIS_MODULE,
+   .owner   = THIS_MODULE,
+   .open    = scull_open,
+   .release = scull_release,
 };
 
 static void __exit scull_clean(void)
 {
    unregister_chrdev_region(dev, count);
+   cdev_del(my_cdev);
+}
+
+static int make_cdev(void) 
+{
+   int err;
+   my_cdev = cdev_alloc();
+   cdev_init(my_cdev, &scull_fops);
+   my_cdev->owner = THIS_MODULE;
+   my_cdev->ops   = &scull_fops;
+   err = cdev_add(my_cdev, dev, 1);
+   return err;
 }
 
 static int __init scull_init(void)
 {
-   int result = alloc_chrdev_region(&dev, firstminor, count, "scull");
+   int result, scull_major, err;
+   result = alloc_chrdev_region(&dev, firstminor, count, "scull");
+   scull_major = MAJOR(dev);
+   printk(KERN_ALERT "Major number is: %d\n", scull_major);
    if (result < 0) {
       printk(KERN_WARNING "scull: can't get major\n"); 
       return result;
    }
-   //struct cdev *my_cdev = cdev_alloc();
+   err = make_cdev();
+   if (err) {
+      printk(KERN_WARNING "scull: can't add char device\n");
+      return err;
+   }
    return 0;
 }
 
