@@ -19,12 +19,31 @@
 
 MODULE_LICENSE("Dual BSD/GPL");
 
-unsigned int count = 1;
-dev_t dev = 0;
-struct cdev *my_cdev;
+/*These values can be changed at compile time */
+#define QUANTUM 4000
+#define QSET 1000
+
+unsigned int scull_minor = 0;
+unsigned int scull_major;
+
+struct scull_dev {
+   struct scull_qset *data;
+   struct cdev cdev;
+   unsigned int quantum;
+   unsigned int qset;
+   unsigned long size;
+};
+
+struct scull_qset {
+   void **data;
+   struct scull_qset *next;
+};
 
 int scull_open(struct inode *inode, struct file *filp)
 {
+   struct scull_dev *dev;
+   dev = container_of(inode->i_cdev, struct scull_dev, cdev);
+   filp->private_data = dev;
    return 0;
 }
 
@@ -32,6 +51,12 @@ int scull_release(struct inode *inode, struct file *filp)
 {
    return 0;
 }
+
+/*ssize_t scull_read(struct file *filp, char __user *buf, size_t count,
+                   loff_t *f_pos)
+{
+}*/
+
 
 struct file_operations scull_fops = {
    .owner   = THIS_MODULE,
@@ -41,36 +66,33 @@ struct file_operations scull_fops = {
 
 static void __exit scull_clean(void)
 {
-   unregister_chrdev_region(dev, count);
-   cdev_del(my_cdev);
+   dev_t dev = MKDEV(scull_major, scull_minor);
+   unregister_chrdev_region(dev, 1);
 }
 
-static int make_cdev(void) 
+static void make_cdev(struct scull_dev *sdev) 
 {
    int err;
-   my_cdev = cdev_alloc();
-   cdev_init(my_cdev, &scull_fops);
-   my_cdev->owner = THIS_MODULE;
-   my_cdev->ops   = &scull_fops;
-   err = cdev_add(my_cdev, dev, 1);
-   return err;
+   int dev_err = MKDEV(scull_major, scull_minor);
+   cdev_init(&sdev->cdev, &scull_fops);
+   sdev->cdev.owner = THIS_MODULE;
+   sdev->cdev.ops   = &scull_fops;
+   err = cdev_add(&sdev->cdev, dev_err, 1);
+   if (err) 
+      printk(KERN_WARNING "Error adding scull: %d\n", err);
 }
 
 static int __init scull_init(void)
 {
-   int result, scull_major, err;
-   result = alloc_chrdev_region(&dev, firstminor, count, "scull");
-   scull_major = MAJOR(dev);
-   printk(KERN_ALERT "Major number is: %d\n", scull_major);
+   struct scull_dev sdev;
+   dev_t dev = 0;
+   int result;
+   result = alloc_chrdev_region(&dev, 0, 1, "scull");
    if (result < 0) {
       printk(KERN_WARNING "scull: can't get major\n"); 
       return result;
    }
-   err = make_cdev();
-   if (err) {
-      printk(KERN_WARNING "scull: can't add char device\n");
-      return err;
-   }
+   make_cdev(&sdev);
    return 0;
 }
 
