@@ -42,6 +42,10 @@ static void __exit scull_clean(void)
 static int __init scull_init(void)
 {
    int result = alloc_chrdev_region(&dev, firstminor, count, "scull");
+   if (result < 0) {
+      printk(KERN_WARNING "scull: can't get major\n"); 
+      return result;
+   }
    //struct cdev *my_cdev = cdev_alloc();
    return 0;
 }
