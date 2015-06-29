@@ -41,10 +41,10 @@ struct scull_qset {
 
 int scull_open(struct inode *inode, struct file *filp)
 {
-   //struct scull_dev *sdev;
-   //printk(KERN_WARNING "omg it opened\n");
-   //sdev = container_of(inode->i_cdev, struct scull_dev, cdev);
-   //filp->private_data = sdev;
+   /*struct scull_dev *sdev;
+   printk(KERN_WARNING "omg it opened\n");
+   sdev = container_of(inode->i_cdev, struct scull_dev, cdev);
+   filp->private_data = sdev;*/
    return 0;
 }
 
@@ -110,12 +110,12 @@ static int __init scull_init(void)
    sdev.qset    = QSET;
    result = alloc_chrdev_region(&dev, 0, 1, "scull");
    scull_major = MAJOR(dev);
-   printk(KERN_ALERT "major number is %d\n", scull_major);
    if (result < 0) {
       printk(KERN_WARNING "scull: can't get major\n"); 
       return result;
    }
    make_cdev(&sdev);
+   printk(KERN_ALERT "major number is %d\n", scull_major);
    return 0;
 }
 
