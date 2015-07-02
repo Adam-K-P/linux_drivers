@@ -26,7 +26,12 @@ MODULE_LICENSE("Dual BSD/GPL");
 unsigned int scull_minor = 0;
 unsigned int scull_major;
 
-struct scull_dev {
+struct scull_qset {
+   void **data;
+   struct scull_qset *next;
+};
+
+struct scull_device {
    struct scull_qset *data;
    struct cdev cdev;
    unsigned int quantum;
@@ -34,11 +39,7 @@ struct scull_dev {
    unsigned long size;
    struct mutex mutex;
 };
-
-struct scull_qset {
-   void **data;
-   struct scull_qset *next;
-};
+struct scull_device sdev;
 
 /* Declaration of scull functions */
 int scull_open(struct inode *inode, struct file *filp);
@@ -58,15 +59,15 @@ struct file_operations scull_fops = {
 
 int scull_open(struct inode *inode, struct file *filp)
 {
-   struct scull_dev *sdev;
+   //struct scull_dev *sdev;
    printk(KERN_WARNING "omg it opened\n");
-   sdev = container_of(inode->i_cdev, struct scull_dev, cdev);
-   filp->private_data = sdev;
-   if ( (filp->f_flags & O_ACCMODE) == O_WRONLY) {
+   //sdev = container_of(inode->i_cdev, struct scull_dev, cdev);
+   filp->private_data = &sdev;
+   /*if ( (filp->f_flags & O_ACCMODE) == O_WRONLY) {
       if (mutex_lock_interruptible(&sdev->mutex))
          return -ERESTARTSYS;
       mutex_unlock(&sdev->mutex);
-   }
+   }*/
    return 0;
 }
 
@@ -78,15 +79,15 @@ int scull_release(struct inode *inode, struct file *filp)
 ssize_t scull_read(struct file *filp, char __user *buf, size_t count,
                    loff_t *f_pos)
 {
-   //struct scull_dev  *sdev = filp->private_data;
-   //struct scull_qset *dptr;
-   //int quantum, qset;
-   //int itemsize, item, spos, qpos, rest;
-   //ssize_t retval = 0;
-   //quantum = sdev->quantum;
-   //qset    = sdev->qset;
-   //itemsize = quantum * qset;
-   //return retval;
+   /*struct scull_dev  *sdev = filp->private_data;
+   struct scull_qset *dptr;
+   int quantum, qset;
+   int itemsize, item, spos, qpos, rest;
+   ssize_t retval = 0;
+   quantum = sdev->quantum;
+   qset    = sdev->qset;
+   itemsize = quantum * qset;
+   return retval;*/
    return 0;
 }
 
@@ -96,26 +97,24 @@ ssize_t scull_write(struct file *filp, const char __user *buf, size_t count,
    return 0;
 }
 
-
 static void scull_clean(void)
 {
+   cdev_del(&sdev.cdev);
    unregister_chrdev(scull_major, "scull");
 }
 
-/*static void make_cdev(struct scull_dev *sdev) 
+static void reg_cdev(void) 
 {
-   int err;
-   int dev_err = MKDEV(scull_major, scull_minor);
-   cdev_init(&sdev->cdev, &scull_fops);
-   sdev->cdev.owner = THIS_MODULE;
-   sdev->cdev.ops   = &scull_fops;
-   err = cdev_add(&sdev->cdev, dev_err, 1);
+   int err, dev_err = MKDEV(scull_major, scull_minor);
+   cdev_init(&sdev.cdev, &scull_fops);
+   sdev.cdev.owner = THIS_MODULE;
+   sdev.cdev.ops   = &scull_fops;
+   err = cdev_add(&sdev.cdev, dev_err, 1);
    if (err) printk(KERN_WARNING "Error adding scull: %d\n", err);
-}*/
+}
 
 static int scull_init(void)
 {
-   struct scull_dev sdev;
    int result;
    sdev.quantum = QUANTUM;
    sdev.qset    = QSET;
@@ -124,7 +123,8 @@ static int scull_init(void)
       printk(KERN_WARNING "scull: can't get major\n"); 
       return result;
    }
-   //make_cdev(&sdev);
+   reg_cdev();
+
    printk(KERN_ALERT "major number is %d\n", scull_major);
    return 0;
 }
