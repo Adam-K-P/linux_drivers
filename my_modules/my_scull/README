@@ -1,0 +1,11 @@
+This is my scull implementation.  You can write memory to it and read memory from it.  The program "test.c" will take any command line arguments and copy them to the scull driver, then read them back and print them to stdout.  
+
+If you intend on running this program, there are some things you will need to do.  Firstly you will (obviously) need a computer with a linux kernel.  
+
+You will need to run "make ins" inside of the scull directory.
+
+Then, you will need to run dmesg and check what the major number is.
+
+Then, you will need to go to your /dev directory and run "mknod scull c major 0", with major being the major number you read in dmesg.
+
+Now, you can run test and check the output.
