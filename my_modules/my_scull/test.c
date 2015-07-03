@@ -9,15 +9,24 @@
 #include <string.h>
 #include <unistd.h>
 
-int main (void) {
+int main (int argc, char **argv) {
    ssize_t res, rev;
-   int fd;
+   int fd, string_len = 1;
+
+   for (int i = 1; i < argc; ++i) string_len += strlen(argv[i]);
+   char *string = malloc(string_len);
+   for (int i = 1; i < argc; ++i) strcat(string, argv[i]);
+
    fd = open("/dev/scull", O_RDWR);
-   char *string = "hello, world";
-   char *buffer = malloc(strlen(string) + 1);
-   res = write(fd, (const void *)string, 1);
-   if (res < 0) return 1;
-   rev = read(fd, buffer, 1);
-   printf("Read string: %s from kernel\n", buffer);
+   char *buffer = malloc(string_len);
+   res = write(fd, (const void *)string, string_len);
+   if (res < 0) return EXIT_FAILURE;
+
+   char *buf = malloc(string_len);
+   rev = read(fd, buf, string_len);
+   if (rev < 0) return EXIT_FAILURE;
+   printf("Read string: %s from kernel\n", buf);
+
    close(fd);
+   return EXIT_SUCCESS;
 }

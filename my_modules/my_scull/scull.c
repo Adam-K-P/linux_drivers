@@ -1,8 +1,6 @@
 #include <linux/module.h>
 #include <linux/moduleparam.h>
 #include <linux/init.h>
-
-
 #include <linux/kernel.h>	/* printk() */
 #include <linux/slab.h>		/* kmalloc() */
 #include <linux/fs.h>		/* everything... */
@@ -28,14 +26,11 @@ unsigned int scull_major;
 
 struct scull_qset {
    void *data;
-   //struct scull_qset *next;
 };
 
 struct scull_device {
    struct scull_qset *qset;
    struct cdev cdev;
-   /*unsigned int quantum;
-   unsigned int qset;*/
    unsigned long size;
    struct mutex mutex;
 };
@@ -60,11 +55,11 @@ struct file_operations scull_fops = {
 int scull_open(struct inode *inode, struct file *filp)
 {
    printk(KERN_WARNING "Opening file\n");
-   if ( (filp->f_flags & O_ACCMODE) == O_WRONLY) {
+   /*if ( (filp->f_flags & O_ACCMODE) == O_WRONLY) {
       if (mutex_lock_interruptible(&sdev.mutex))
          return -ERESTARTSYS;
       mutex_unlock(&sdev.mutex);
-   }
+   }*/
    return 0;
 }
 
@@ -84,9 +79,10 @@ ssize_t scull_read(struct file *filp, char __user *buf, size_t count,
       printk(KERN_WARNING "Nothing here to read\n");
       return 0;
    }
-   copy_res = _copy_to_user(sdev.qset->data, buf, count);
+   copy_res = _copy_to_user(buf, sdev.qset->data, count);
    if (copy_res) {
-      printk(KERN_WARNING "scull_read: Failed to transfer %d bytes \n", copy_res);
+      printk(KERN_WARNING "scull_read: Failed to transfer %d bytes \n", 
+             copy_res);
       return -EFAULT;
    }
    *f_pos += count;
