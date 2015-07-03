@@ -59,7 +59,7 @@ struct file_operations scull_fops = {
 
 int scull_open(struct inode *inode, struct file *filp)
 {
-   printk(KERN_WARNING "omg it opened\n");
+   printk(KERN_WARNING "Opening file\n");
    if ( (filp->f_flags & O_ACCMODE) == O_WRONLY) {
       if (mutex_lock_interruptible(&sdev.mutex))
          return -ERESTARTSYS;
@@ -70,44 +70,50 @@ int scull_open(struct inode *inode, struct file *filp)
 
 int scull_release(struct inode *inode, struct file *filp)
 {
+   kfree(sdev.qset->data);
+   printk(KERN_WARNING "Closing file\n");
    return 0;
 }
 
 ssize_t scull_read(struct file *filp, char __user *buf, size_t count,
                    loff_t *f_pos)
 {
-   printk(KERN_ALERT "Read begin\n");
+   int copy_res;
+   printk(KERN_WARNING "Read begin\n");
    if (sdev.qset->data == NULL) {
       printk(KERN_WARNING "Nothing here to read\n");
       return 0;
    }
-   if (copy_to_user(sdev.qset->data, buf, count)) return -EFAULT;
+   copy_res = _copy_to_user(sdev.qset->data, buf, count);
+   if (copy_res) {
+      printk(KERN_WARNING "scull_read: Failed to transfer %d bytes \n", copy_res);
+      return -EFAULT;
+   }
    *f_pos += count;
-   /*struct scull_qset *dptr;
-   int quantum, qset;
-   int itemsize, item, spos, qpos, rest;
-   ssize_t retval = 0;
-   quantum = sdev.quantum;
-   qset    = sdev.qset;
-   itemsize = quantum * qset;*/
-   printk(KERN_ALERT "Read end\n");
+   printk(KERN_WARNING "Read end\n");
    return count;
 }
 
 ssize_t scull_write(struct file *filp, const char __user *buf, size_t count,
                     loff_t *f_pos)
 {
-   printk(KERN_ALERT "Write begin\n");
+   int res;
+   printk(KERN_WARNING "Write begin\n");
    sdev.qset->data = kmalloc(count, GFP_KERNEL);
    if (sdev.qset->data == NULL) {
       printk(KERN_WARNING "Memory unable to be initialized\n");
       return -EFAULT;
    }
    memset(sdev.qset->data, 0, count);
-   if(copy_from_user(sdev.qset->data, buf, count)) return -EFAULT;
-   *f_pos += count;
-   printk(KERN_ALERT "Write end\n");
-   return count;
+   res = _copy_from_user(sdev.qset->data, buf, count);
+   if (res) {
+      printk(KERN_WARNING "scull_write: Failed to transfer %d bytes\n", res);
+      return -EFAULT;
+   }
+   printk(KERN_WARNING "Read string: %s from user\n", (char *)sdev.qset->data);
+   *f_pos += (loff_t) count;
+   printk(KERN_WARNING "Write end\n");
+   return (ssize_t)count;
 }
 
 static void scull_clean(void)
@@ -129,15 +135,15 @@ static void reg_cdev(void)
 static int scull_init(void)
 {
    int result;
-   /*sdev.quantum = QUANTUM;
-   sdev.qset    = QSET;*/
+   struct scull_qset *this_qset;
+   this_qset = kmalloc(sizeof(struct scull_qset), GFP_KERNEL); 
+   sdev.qset = this_qset;
    scull_major = register_chrdev(0, "scull", &scull_fops );
    if (scull_major < 0) {
       printk(KERN_WARNING "scull: can't get major\n"); 
       return result;
    }
    reg_cdev();
-
    printk(KERN_ALERT "major number is %d\n", scull_major);
    return 0;
 }
