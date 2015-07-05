@@ -1,5 +1,5 @@
 // Adam Pinarbasi
-/* This module is a Simple Character Utility for Loading Localities.
+/* This module is a Simple Character Utility for Loading Localities (scull).
    An accompanying program, test, will transfer anything you write
    to the character device scull in kernel space (using the write system 
    call) then echo back what you wrote into user space (using the read
