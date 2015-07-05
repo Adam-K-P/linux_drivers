@@ -27,6 +27,9 @@ ins: default rem
 rem:
 	@if [ -n "`lsmod | grep -s $(TARGET)`" ]; then rmmod $(TARGET); echo "rmmod $(TARGET)"; fi
 
+test:
+	gcc -std=c11 -O3 -o test test.c
+
 ifeq (.depend,$(wildcard .depend))
 include .depend
 endif
