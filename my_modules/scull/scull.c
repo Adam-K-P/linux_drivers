@@ -37,20 +37,14 @@ struct file_operations scull_fops = {
 int scull_open(struct inode *inode, struct file *filp)
 {
    printk(KERN_WARNING "Opening file\n");
-   if ( (filp->f_flags & O_ACCMODE) == O_WRONLY) {
-      if (mutex_lock_interruptible(&sdev.mutex))
-         return -ERESTARTSYS;
-      mutex_unlock(&sdev.mutex);
-   }
    return 0;
 }
 
 int scull_release(struct inode *inode, struct file *filp)
 {
-   /*if (mutex_lock_interruptible(&sdev.mutex))
-      return -ERESTARTSYS;*/
+   if (mutex_lock_interruptible(&sdev.mutex)) return -ERESTARTSYS;
    kfree(sdev.qset->data);
-   //mutex_unlock(&sdev.mutex);
+   mutex_unlock(&sdev.mutex);
    printk(KERN_WARNING "Closing file\n");
    return 0;
 }
@@ -64,15 +58,15 @@ ssize_t scull_read(struct file *filp, char __user *buf, size_t count,
       printk(KERN_WARNING "Nothing here to read\n");
       return 0;
    }
-   /*if (mutex_lock_interruptible(&sdev.mutex))
-      return -ERESTARTSYS;*/
+   if (mutex_lock_interruptible(&sdev.mutex)) return -ERESTARTSYS;
    copy_res = _copy_to_user(buf, sdev.qset->data, count);
-   //mutex_unlock(&sdev.mutex);
    if (copy_res) {
       printk(KERN_WARNING "scull_read: Failed to transfer %d bytes \n", 
-             copy_res);
+                                                               copy_res);
+      mutex_unlock(&sdev.mutex);
       return -EFAULT;
    }
+   mutex_unlock(&sdev.mutex);
    *f_pos += count;
    printk(KERN_WARNING "Read end\n");
    return count;
@@ -83,20 +77,21 @@ ssize_t scull_write(struct file *filp, const char __user *buf, size_t count,
 {
    int res;
    printk(KERN_WARNING "Write begin\n");
-   /*if (mutex_lock_interruptible(&sdev.mutex))
-      return -ERESTARTSYS;*/
+   if (mutex_lock_interruptible(&sdev.mutex)) return -ERESTARTSYS;
    sdev.qset->data = kmalloc(count, GFP_KERNEL);
    if (sdev.qset->data == NULL) {
       printk(KERN_WARNING "Memory unable to be initialized\n");
+      mutex_unlock(&sdev.mutex);
       return -EFAULT;
    }
    memset(sdev.qset->data, 0, count);
    res = _copy_from_user(sdev.qset->data, buf, count);
-   //mutex_unlock(&sdev.mutex);
    if (res) {
       printk(KERN_WARNING "scull_write: Failed to transfer %d bytes\n", res);
+      mutex_unlock(&sdev.mutex);
       return -EFAULT;
    }
+   mutex_unlock(&sdev.mutex);
    printk(KERN_WARNING "Read string: %s from user\n", (char *)sdev.qset->data);
    *f_pos += (loff_t) count;
    printk(KERN_WARNING "Write end\n");
@@ -126,6 +121,7 @@ static int scull_init(void)
    int result;
    struct scull_qset *this_qset;
    printk(KERN_WARNING "Initializing module\n");
+   mutex_init(&sdev.mutex);
    this_qset = kmalloc(sizeof(struct scull_qset), GFP_KERNEL); 
    sdev.qset = this_qset;
    scull_major = register_chrdev(0, "scull", &scull_fops );
@@ -134,7 +130,7 @@ static int scull_init(void)
       return result;
    }
    reg_cdev();
-   printk(KERN_WARNING "Module initialized\n");_
+   printk(KERN_WARNING "Module initialized\n");
    printk(KERN_ALERT "major number is %d\n", scull_major);
    return 0;
 }
