@@ -27,11 +27,17 @@ struct mem_device mem_dev;
 
 struct file_operations mem_fops = {
    owner:   THIS_MODULE,
-   open:    mem_open,
-   read:    mem_read,
-   release: mem_release,
-   write:   mem_write,
+   open:             mem_open,
+   read:             mem_read,
+   release:          mem_release,
+   write:            mem_write,
+   unlocked_ioctl:   mem_ioctl,
 };
+
+long mem_ioctl (struct inode *inode, struct file *filp, unsigned int cmd,
+                                                        unsigned long arg) { 
+   return 0;
+}
 
 int mem_open (struct inode *inode, struct file *filp) 
 {
