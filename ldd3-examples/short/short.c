@@ -147,32 +147,32 @@ ssize_t do_short_read (struct inode *inode, struct file *filp, char __user *buf,
 		mode = SHORT_MEMORY;
 	
 	switch(mode) {
-	    case SHORT_STRING:
+	case SHORT_STRING:
 		insb(port, ptr, count);
 		rmb();
 		break;
 
-	    case SHORT_DEFAULT:
+	case SHORT_DEFAULT:
 		while (count--) {
 			*(ptr++) = inb(port);
 			rmb();
 		}
 		break;
 
-	    case SHORT_MEMORY:
+	case SHORT_MEMORY:
 		while (count--) {
 			*ptr++ = ioread8(address);
 			rmb();
 		}
 		break;
-	    case SHORT_PAUSE:
+	case SHORT_PAUSE:
 		while (count--) {
 			*(ptr++) = inb_p(port);
 			rmb();
 		}
 		break;
 
-	    default: /* no more modes defined by now */
+	default: /* no more modes defined by now */
 		retval = -EINVAL;
 		break;
 	}
@@ -547,6 +547,7 @@ void short_selfprobe(void)
 int short_init(void)
 {
 	int result;
+        void *addr; /* for checking return address from ioremap */
 
 	/*
 	 * first, sort out the base/short_base ambiguity: we'd better
@@ -572,8 +573,10 @@ int short_init(void)
 		}
 
 		/* also, ioremap it */
-		short_base = (unsigned long) ioremap(short_base, SHORT_NR_PORTS);
-		/* Hmm... we should check the return value */
+		addr = ioremap(short_base, SHORT_NR_PORTS);
+                if (addr == NULL) 
+                        return -ENODEV;
+                else short_base = (unsigned long)addr;
 	}
 	/* Here we register our device - should not fail thereafter */
 	result = register_chrdev(major, "short", &short_fops);
@@ -661,7 +664,6 @@ int short_init(void)
 			short_irq = -1;
 		}
 	}
-
 	return 0;
 }
 
