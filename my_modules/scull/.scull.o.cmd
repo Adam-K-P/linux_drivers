@@ -1,9 +1,9 @@
-cmd_/home/adam/Linux/drivers/my_modules/mem_test/mem_test.mod.o :=  gcc-4.8 -Wp,-MD,/home/adam/Linux/drivers/my_modules/mem_test/.mem_test.mod.o.d  -nostdinc -isystem /usr/lib/gcc/x86_64-linux-gnu/4.8/include -I/usr/src/linux-headers-3.16.0-4-common/arch/x86/include -Iarch/x86/include/generated  -I/usr/src/linux-headers-3.16.0-4-common/include -Iinclude -I/usr/src/linux-headers-3.16.0-4-common/arch/x86/include/uapi -Iarch/x86/include/generated/uapi -I/usr/src/linux-headers-3.16.0-4-common/include/uapi -Iinclude/generated/uapi -include /usr/src/linux-headers-3.16.0-4-common/include/linux/kconfig.h   -I/home/adam/Linux/drivers/my_modules/mem_test -D__KERNEL__ -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs -fno-strict-aliasing -fno-common -Werror-implicit-function-declaration -Wno-format-security -m64 -mno-mmx -mno-sse -mno-80387 -mno-fp-ret-in-387 -mpreferred-stack-boundary=3 -mtune=generic -mno-red-zone -mcmodel=kernel -funit-at-a-time -maccumulate-outgoing-args -DCONFIG_X86_X32_ABI -DCONFIG_AS_CFI=1 -DCONFIG_AS_CFI_SIGNAL_FRAME=1 -DCONFIG_AS_CFI_SECTIONS=1 -DCONFIG_AS_FXSAVEQ=1 -DCONFIG_AS_CRC32=1 -DCONFIG_AS_AVX=1 -DCONFIG_AS_AVX2=1 -pipe -Wno-sign-compare -fno-asynchronous-unwind-tables -mno-sse -mno-mmx -mno-sse2 -mno-3dnow -mno-avx -fno-delete-null-pointer-checks -O2 -Wframe-larger-than=2048 -fstack-protector -Wno-unused-but-set-variable -fno-var-tracking-assignments -g -pg -mfentry -DCC_USING_FENTRY -Wdeclaration-after-statement -Wno-pointer-sign -fno-strict-overflow -fconserve-stack -Werror=implicit-int -Werror=strict-prototypes -DCC_HAVE_ASM_GOTO  -D"KBUILD_STR(s)=\#s" -D"KBUILD_BASENAME=KBUILD_STR(mem_test.mod)"  -D"KBUILD_MODNAME=KBUILD_STR(mem_test)" -DMODULE  -c -o /home/adam/Linux/drivers/my_modules/mem_test/mem_test.mod.o /home/adam/Linux/drivers/my_modules/mem_test/mem_test.mod.c
+cmd_/home/adam/Linux/drivers/my_modules/scull/scull.o :=  gcc-4.8 -Wp,-MD,/home/adam/Linux/drivers/my_modules/scull/.scull.o.d  -nostdinc -isystem /usr/lib/gcc/x86_64-linux-gnu/4.8/include -I/usr/src/linux-headers-3.16.0-4-common/arch/x86/include -Iarch/x86/include/generated  -I/usr/src/linux-headers-3.16.0-4-common/include -Iinclude -I/usr/src/linux-headers-3.16.0-4-common/arch/x86/include/uapi -Iarch/x86/include/generated/uapi -I/usr/src/linux-headers-3.16.0-4-common/include/uapi -Iinclude/generated/uapi -include /usr/src/linux-headers-3.16.0-4-common/include/linux/kconfig.h   -I/home/adam/Linux/drivers/my_modules/scull -D__KERNEL__ -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs -fno-strict-aliasing -fno-common -Werror-implicit-function-declaration -Wno-format-security -m64 -mno-mmx -mno-sse -mno-80387 -mno-fp-ret-in-387 -mpreferred-stack-boundary=3 -mtune=generic -mno-red-zone -mcmodel=kernel -funit-at-a-time -maccumulate-outgoing-args -DCONFIG_X86_X32_ABI -DCONFIG_AS_CFI=1 -DCONFIG_AS_CFI_SIGNAL_FRAME=1 -DCONFIG_AS_CFI_SECTIONS=1 -DCONFIG_AS_FXSAVEQ=1 -DCONFIG_AS_CRC32=1 -DCONFIG_AS_AVX=1 -DCONFIG_AS_AVX2=1 -pipe -Wno-sign-compare -fno-asynchronous-unwind-tables -mno-sse -mno-mmx -mno-sse2 -mno-3dnow -mno-avx -fno-delete-null-pointer-checks -O2 -Wframe-larger-than=2048 -fstack-protector -Wno-unused-but-set-variable -fno-var-tracking-assignments -g -pg -mfentry -DCC_USING_FENTRY -Wdeclaration-after-statement -Wno-pointer-sign -fno-strict-overflow -fconserve-stack -Werror=implicit-int -Werror=strict-prototypes -DCC_HAVE_ASM_GOTO  -DMODULE  -D"KBUILD_STR(s)=\#s" -D"KBUILD_BASENAME=KBUILD_STR(scull)"  -D"KBUILD_MODNAME=KBUILD_STR(scull)" -c -o /home/adam/Linux/drivers/my_modules/scull/.tmp_scull.o /home/adam/Linux/drivers/my_modules/scull/scull.c
 
-source_/home/adam/Linux/drivers/my_modules/mem_test/mem_test.mod.o := /home/adam/Linux/drivers/my_modules/mem_test/mem_test.mod.c
+source_/home/adam/Linux/drivers/my_modules/scull/scull.o := /home/adam/Linux/drivers/my_modules/scull/scull.c
 
-deps_/home/adam/Linux/drivers/my_modules/mem_test/mem_test.mod.o := \
-    $(wildcard include/config/module/unload.h) \
+deps_/home/adam/Linux/drivers/my_modules/scull/scull.o := \
+  /home/adam/Linux/drivers/my_modules/scull/scull.h \
   /usr/src/linux-headers-3.16.0-4-common/include/linux/module.h \
     $(wildcard include/config/sysfs.h) \
     $(wildcard include/config/modules.h) \
@@ -16,6 +16,7 @@ deps_/home/adam/Linux/drivers/my_modules/mem_test/mem_test.mod.o := \
     $(wildcard include/config/tracing.h) \
     $(wildcard include/config/event/tracing.h) \
     $(wildcard include/config/ftrace/mcount/record.h) \
+    $(wildcard include/config/module/unload.h) \
     $(wildcard include/config/constructors.h) \
     $(wildcard include/config/debug/set/module/ronx.h) \
   /usr/src/linux-headers-3.16.0-4-common/include/linux/list.h \
@@ -580,9 +581,79 @@ deps_/home/adam/Linux/drivers/my_modules/mem_test/mem_test.mod.o := \
     $(wildcard include/config/have/mod/arch/specific.h) \
     $(wildcard include/config/modules/use/elf/rel.h) \
     $(wildcard include/config/modules/use/elf/rela.h) \
-  /usr/src/linux-headers-3.16.0-4-common/include/linux/vermagic.h \
-  include/generated/utsrelease.h \
+  /usr/src/linux-headers-3.16.0-4-common/include/linux/slab.h \
+    $(wildcard include/config/slab/debug.h) \
+    $(wildcard include/config/failslab.h) \
+    $(wildcard include/config/memcg/kmem.h) \
+    $(wildcard include/config/slob.h) \
+    $(wildcard include/config/slab.h) \
+    $(wildcard include/config/slub.h) \
+    $(wildcard include/config/debug/slab.h) \
+  /usr/src/linux-headers-3.16.0-4-common/include/linux/kmemleak.h \
+    $(wildcard include/config/debug/kmemleak.h) \
+  /usr/src/linux-headers-3.16.0-4-common/include/linux/slab_def.h \
+  /usr/src/linux-headers-3.16.0-4-common/include/linux/reciprocal_div.h \
+  /usr/src/linux-headers-3.16.0-4-common/include/linux/fs.h \
+    $(wildcard include/config/fs/posix/acl.h) \
+    $(wildcard include/config/security.h) \
+    $(wildcard include/config/ima.h) \
+    $(wildcard include/config/quota.h) \
+    $(wildcard include/config/fsnotify.h) \
+    $(wildcard include/config/epoll.h) \
+    $(wildcard include/config/file/locking.h) \
+    $(wildcard include/config/auditsyscall.h) \
+    $(wildcard include/config/block.h) \
+    $(wildcard include/config/fs/xip.h) \
+    $(wildcard include/config/migration.h) \
+  /usr/src/linux-headers-3.16.0-4-common/include/linux/kdev_t.h \
+  /usr/src/linux-headers-3.16.0-4-common/include/uapi/linux/kdev_t.h \
+  /usr/src/linux-headers-3.16.0-4-common/include/linux/dcache.h \
+  /usr/src/linux-headers-3.16.0-4-common/include/linux/rculist.h \
+  /usr/src/linux-headers-3.16.0-4-common/include/linux/rculist_bl.h \
+  /usr/src/linux-headers-3.16.0-4-common/include/linux/list_bl.h \
+  /usr/src/linux-headers-3.16.0-4-common/include/linux/bit_spinlock.h \
+  /usr/src/linux-headers-3.16.0-4-common/include/linux/lockref.h \
+    $(wildcard include/config/arch/use/cmpxchg/lockref.h) \
+  /usr/src/linux-headers-3.16.0-4-common/include/linux/path.h \
+  /usr/src/linux-headers-3.16.0-4-common/include/linux/list_lru.h \
+  /usr/src/linux-headers-3.16.0-4-common/include/linux/radix-tree.h \
+  /usr/src/linux-headers-3.16.0-4-common/include/linux/pid.h \
+  /usr/src/linux-headers-3.16.0-4-common/include/linux/capability.h \
+  /usr/src/linux-headers-3.16.0-4-common/include/uapi/linux/capability.h \
+  /usr/src/linux-headers-3.16.0-4-common/include/linux/semaphore.h \
+  /usr/src/linux-headers-3.16.0-4-common/include/uapi/linux/fiemap.h \
+  /usr/src/linux-headers-3.16.0-4-common/include/linux/shrinker.h \
+  /usr/src/linux-headers-3.16.0-4-common/include/linux/migrate_mode.h \
+  /usr/src/linux-headers-3.16.0-4-common/include/linux/percpu-rwsem.h \
+  /usr/src/linux-headers-3.16.0-4-common/include/linux/blk_types.h \
+    $(wildcard include/config/blk/cgroup.h) \
+    $(wildcard include/config/blk/dev/integrity.h) \
+  /usr/src/linux-headers-3.16.0-4-common/include/uapi/linux/fs.h \
+  /usr/src/linux-headers-3.16.0-4-common/include/uapi/linux/limits.h \
+  /usr/src/linux-headers-3.16.0-4-common/include/linux/quota.h \
+    $(wildcard include/config/quota/netlink/interface.h) \
+  /usr/src/linux-headers-3.16.0-4-common/include/linux/percpu_counter.h \
+  /usr/src/linux-headers-3.16.0-4-common/include/uapi/linux/dqblk_xfs.h \
+  /usr/src/linux-headers-3.16.0-4-common/include/linux/dqblk_v1.h \
+  /usr/src/linux-headers-3.16.0-4-common/include/linux/dqblk_v2.h \
+  /usr/src/linux-headers-3.16.0-4-common/include/linux/dqblk_qtree.h \
+  /usr/src/linux-headers-3.16.0-4-common/include/linux/projid.h \
+  /usr/src/linux-headers-3.16.0-4-common/include/uapi/linux/quota.h \
+  /usr/src/linux-headers-3.16.0-4-common/include/linux/nfs_fs_i.h \
+  /usr/src/linux-headers-3.16.0-4-common/include/linux/fcntl.h \
+  /usr/src/linux-headers-3.16.0-4-common/include/uapi/linux/fcntl.h \
+  /usr/src/linux-headers-3.16.0-4-common/arch/x86/include/uapi/asm/fcntl.h \
+  /usr/src/linux-headers-3.16.0-4-common/include/uapi/asm-generic/fcntl.h \
+  /usr/src/linux-headers-3.16.0-4-common/include/linux/proc_fs.h \
+  /usr/src/linux-headers-3.16.0-4-common/include/linux/seq_file.h \
+  /usr/src/linux-headers-3.16.0-4-common/include/linux/cdev.h \
+  /usr/src/linux-headers-3.16.0-4-common/arch/x86/include/asm/uaccess.h \
+    $(wildcard include/config/x86/intel/usercopy.h) \
+    $(wildcard include/config/debug/strict/user/copy/checks.h) \
+  /usr/src/linux-headers-3.16.0-4-common/arch/x86/include/asm/smap.h \
+    $(wildcard include/config/x86/smap.h) \
+  /usr/src/linux-headers-3.16.0-4-common/arch/x86/include/asm/uaccess_64.h \
 
-/home/adam/Linux/drivers/my_modules/mem_test/mem_test.mod.o: $(deps_/home/adam/Linux/drivers/my_modules/mem_test/mem_test.mod.o)
+/home/adam/Linux/drivers/my_modules/scull/scull.o: $(deps_/home/adam/Linux/drivers/my_modules/scull/scull.o)
 
-$(deps_/home/adam/Linux/drivers/my_modules/mem_test/mem_test.mod.o):
+$(deps_/home/adam/Linux/drivers/my_modules/scull/scull.o):

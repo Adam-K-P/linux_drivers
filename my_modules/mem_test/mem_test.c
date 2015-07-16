@@ -19,85 +19,84 @@ long quantum = 4000;
 long qset    = 1000;
 
 struct mem_device {
-   void *data;
-   struct cdev cdev;
-   struct mutex mutex;
+        void *data;
+        struct cdev cdev;
+        struct mutex mutex;
 };
 struct mem_device mem_dev;
 
 struct file_operations mem_fops = {
-   owner:   THIS_MODULE,
-   open:             mem_open,
-   read:             mem_read,
-   release:          mem_release,
-   write:            mem_write,
-   unlocked_ioctl:   mem_ioctl,
+        owner:            THIS_MODULE,
+        open:             mem_open,
+        read:             mem_read,
+        release:          mem_release,
+        write:            mem_write,
 };
 
 long mem_ioctl (struct inode *inode, struct file *filp, unsigned int cmd,
                                                         unsigned long arg) { 
-   return 0;
+        return 0;
 }
 
 int mem_open (struct inode *inode, struct file *filp) 
 {
-   printk(KERN_WARNING "Opening file\n");
-   return 0;
+        printk(KERN_NOTICE "Opening file\n");
+        return 0;
 }
 
 int mem_release (struct inode *inode, struct file *filp) 
 {
-   printk(KERN_WARNING "Closing file\n");
-   return 0;
+        printk(KERN_NOTICE "Closing file\n");
+        return 0;
 }
 
 ssize_t mem_read (struct file *filp, char __user *buf, size_t count,
                     loff_t *f_pos) 
 {
-   printk(KERN_WARNING "Read begin\n");
-   printk(KERN_WARNING "Read end\n");
-   return 0;
+        printk(KERN_NOTICE "Read begin\n");
+        printk(KERN_NOTICE "Read end\n");
+        return 0;
 }
 
 ssize_t mem_write (struct file *filp, const char __user *buf, size_t count,
                    loff_t *f_pos)
 {
-   printk(KERN_WARNING "Write begin\n");
-   printk(KERN_WARNING "Write end\n");
-   return 0;
+        printk(KERN_NOTICE "Write begin\n");
+        printk(KERN_NOTICE "Write end\n");
+        return 0;
 }
 
 static void mem_clean (void)
 {
-   printk(KERN_WARNING "Cleaning up module\n");
-   cdev_del(&mem_dev.cdev);
-   unregister_chrdev(mem_major, "mem_test");
-   printk(KERN_WARNING "Module cleaned\n");
+        printk(KERN_NOTICE "Cleaning up module\n");
+        cdev_del(&mem_dev.cdev);
+        unregister_chrdev(mem_major, "mem_test");
+        printk(KERN_NOTICE "Module cleaned\n");
 }
 
 static void reg_cdev (void) 
 {
-   int err, dev_err = MKDEV(mem_major, mem_minor);
-   cdev_init(&mem_dev.cdev, &mem_fops);
-   mem_dev.cdev.owner = THIS_MODULE;
-   mem_dev.cdev.ops   = &mem_fops;
-   err = cdev_add(&mem_dev.cdev, dev_err, 1);
-   if (err) printk(KERN_WARNING "Error adding mem_test: %d\n", err);
+        int err, dev_err = MKDEV(mem_major, mem_minor);
+        cdev_init(&mem_dev.cdev, &mem_fops);
+        mem_dev.cdev.owner = THIS_MODULE;
+        mem_dev.cdev.ops   = &mem_fops;
+        err = cdev_add(&mem_dev.cdev, dev_err, 1);
+        if (err) printk(KERN_WARNING "Error adding mem_test: %d\n", err);
 }
 
 static int mem_init (void)
 {
-   int result;
-   printk(KERN_WARNING "Initializing module\n");
-   mem_major = register_chrdev(0, "mem_test", &mem_fops);
-   if (mem_major < 0) {
-      printk(KERN_WARNING "mem_test: can't get major\n");
-      return result;
-   }
-   reg_cdev();
-   printk(KERN_WARNING "Module initialized\n");
-   printk(KERN_ALERT "Major number is %d\n", mem_major);
-   return 0;
+        int result;
+        printk(KERN_NOTICE "Initializing module\n");
+        mem_major = register_chrdev(0, "mem_test", &mem_fops);
+        if (mem_major < 0) {
+                printk(KERN_WARNING "mem_test: can't get major\n");
+                return result;
+        }
+        reg_cdev();
+        printk(KERN_NOTICE "Module initialized\n");
+        printk(KERN_NOTICE "Major number is %d\n", mem_major);
+        return 0;
 }
 
 module_init(mem_init);
