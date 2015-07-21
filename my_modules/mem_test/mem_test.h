@@ -1,7 +1,6 @@
 #ifndef _MEM_T_H
 #define _MEM_T_H
 
-
 #include <linux/module.h>
 #include <linux/moduleparam.h>
 #include <linux/init.h>
@@ -15,6 +14,11 @@
 #include <linux/seq_file.h>
 #include <linux/cdev.h>
 #include <asm/uaccess.h>	/* copy_*_user */
+
+int mem_open (struct inode *, struct file *);
+int mem_release (struct inode *, struct file *);
+ssize_t mem_read (struct file *, char __user *, size_t, loff_t *);
+ssize_t mem_write (struct file *, const char __user *, size_t, loff_t *);
 
 
 #endif 

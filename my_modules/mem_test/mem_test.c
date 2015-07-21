@@ -1,20 +1,17 @@
-// Adam Pinarbasi
-/* This module is designed to allow low-memory condition testing.
-   If you wish to use this module, you can allocate some amount of 
-   memory by setting the global variables "quantum" and "qset" at
-   module-load time.  A qset, by default, is 1000 bits of memory
-   and a quantum is, by default, 4000 bits of memory.  The amount
-   of memory that will be reserved is equal to (quantum * qset).
-   This means that, by default, this program will allocate 4 Mb
-   of memory. */
-
 #include <linux/module.h>
 #include <linux/moduleparam.h>
 #include <linux/init.h>
 #include <linux/kernel.h>
 #include <linux/slab.h>
+#include <linux/fs.h>
 #include <linux/types.h>
 #include <linux/errno.h>
+#include <linux/proc_fs.h>
+#include <linux/fcntl.h>
+#include <linux/seq_file.h>
+#include <linux/cdev.h>
+#include <asm/uaccess.h>
+#include "mem_test.h"
 
 MODULE_LICENSE("Dual BSD/GPL");
 
@@ -39,16 +36,48 @@ static u64 patterns[] __initdata = {
 	0x7a6c7258554e494cULL, /* yeah ;-) */
 };
 
-static void __init mem_clean (void)
+struct file_operations mem_fops = {
+        owner:   THIS_MODULE,
+        open:    mem_open,
+        read:    mem_read,
+        release: mem_release,
+        write:   mem_write, 
+};
+
+int mem_open (struct inode *inode, struct file *filp) 
+{
+        printk(KERN_NOTICE "Opening file\n");
+        return 0;
+}
+
+int mem_release (struct inode *inode, struct file *filp)
+{
+        printk(KERN_NOTICE "Closing file\n");
+        return 0;
+}
+
+ssize_t mem_read (struct file *filp, char __user *buf, size_t count,
+                  loff_t *f_pos)
+{
+        printk(KERN_NOTICE "Read begin\n");
+        return 0;
+}
+
+ssize_t mem_write (struct file *filp, const char __user *buf, size_t count,
+                   loff_t *f_pos) 
+{
+        printk(KERN_NOTICE "Write begin\n");
+        return 0;
+}
+
+static void mem_clean (void)
 {
         printk(KERN_NOTICE "Cleaning up module\n");
-        printk(KERN_NOTICE "Module cleaned\n");
 }
 
 static int __init mem_init (void)
 {
-        printk(KERN_NOTICE "Initializing module\n");
-        printk(KERN_NOTICE "Module initialized\n");
+        printk(KERN_NOTICE "Module starting\n");
         return 0;
 }
 
