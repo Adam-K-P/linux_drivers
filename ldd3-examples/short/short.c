@@ -79,7 +79,6 @@ module_param(share, int, 0);
 MODULE_AUTHOR ("Alessandro Rubini");
 MODULE_LICENSE("Dual BSD/GPL");
 
-
 unsigned long short_buffer = 0;
 unsigned long volatile short_head;
 volatile unsigned long short_tail;
@@ -98,7 +97,6 @@ static inline void short_incr_bp(volatile unsigned long *index, int delta)
 	barrier();  /* Don't optimize these two together */
 	*index = (new >= (short_buffer + PAGE_SIZE)) ? short_buffer : new;
 }
-
 
 /*
  * The devices with low minor numbers write/read burst of data to/from
@@ -119,12 +117,10 @@ int short_open (struct inode *inode, struct file *filp)
 	return 0;
 }
 
-
 int short_release (struct inode *inode, struct file *filp)
 {
 	return 0;
 }
-
 
 /* first, the port-oriented device */
 
@@ -182,7 +178,6 @@ ssize_t do_short_read (struct inode *inode, struct file *filp, char __user *buf,
 	return retval;
 }
 
-
 /*
  * Version-specific methods for the fops structure.  FIXME don't need anymore.
  */
@@ -190,8 +185,6 @@ ssize_t short_read(struct file *filp, char __user *buf, size_t count, loff_t *f_
 {
 	return do_short_read(filp->f_dentry->d_inode, filp, buf, count, f_pos);
 }
-
-
 
 ssize_t do_short_write (struct inode *inode, struct file *filp, const char __user *buf,
 		size_t count, loff_t *f_pos)
@@ -246,25 +239,16 @@ ssize_t do_short_write (struct inode *inode, struct file *filp, const char __use
 	return retval;
 }
 
-
 ssize_t short_write(struct file *filp, const char __user *buf, size_t count,
 		loff_t *f_pos)
 {
 	return do_short_write(filp->f_dentry->d_inode, filp, buf, count, f_pos);
 }
 
-
-
-
 unsigned int short_poll(struct file *filp, poll_table *wait)
 {
 	return POLLIN | POLLRDNORM | POLLOUT | POLLWRNORM;
 }
-
-
-
-
-
 
 struct file_operations short_fops = {
 	.owner	 = THIS_MODULE,
@@ -285,7 +269,7 @@ ssize_t short_i_read (struct file *filp, char __user *buf, size_t count, loff_t 
 	while (short_head == short_tail) {
 		prepare_to_wait(&short_queue, &wait, TASK_INTERRUPTIBLE);
 		if (short_head == short_tail)
-			schedule();
+			schedule(); //wait for data?
 		finish_wait(&short_queue, &wait);
 		if (signal_pending (current))  /* a signal arrived */
 			return -ERESTARTSYS; /* tell the fs layer to handle it */
