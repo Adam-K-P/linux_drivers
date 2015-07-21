@@ -18,19 +18,34 @@
 
 MODULE_LICENSE("Dual BSD/GPL");
 
-struct mem_device {
-        void *data;
-        struct mutex mutex;
+static u64 patterns[] __initdata = {
+        /* The first entry has to be 0 to leave memtest with zeroed memory */
+	0,
+	0x1111111111111111ULL,
+	0x2222222222222222ULL,
+	0x3333333333333333ULL,
+	0x4444444444444444ULL,
+	0x5555555555555555ULL,
+	0x6666666666666666ULL,
+	0x7777777777777777ULL,
+	0x8888888888888888ULL,
+	0x9999999999999999ULL,
+	0xaaaaaaaaaaaaaaaaULL,
+	0xbbbbbbbbbbbbbbbbULL,
+	0xccccccccccccccccULL,
+	0xddddddddddddddddULL,
+	0xeeeeeeeeeeeeeeeeULL,
+	0xffffffffffffffffULL,
+	0x7a6c7258554e494cULL, /* yeah ;-) */
 };
-struct mem_device mem_dev;
 
-static void mem_clean (void)
+static void __init mem_clean (void)
 {
         printk(KERN_NOTICE "Cleaning up module\n");
         printk(KERN_NOTICE "Module cleaned\n");
 }
 
-static int mem_init (void)
+static int __init mem_init (void)
 {
         printk(KERN_NOTICE "Initializing module\n");
         printk(KERN_NOTICE "Module initialized\n");
