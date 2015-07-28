@@ -15,8 +15,11 @@ default:
 
 endif
 
+client:
+	gcc -o test mem_test_client.c
+
 clean:
-	rm -rf *.o *.ko *~ core .depend *.mod.c .*.cmd .tmp_versions .*.o.d .*.swp
+	rm -rf *.o *.ko *~ core .depend *.mod.c .*.cmd .tmp_versions .*.o.d .*.swp test
 
 depend .depend dep:
 	$(CC) $(CFLAGS) -M *.c > .depend

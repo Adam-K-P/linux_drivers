@@ -7,6 +7,7 @@
 
 #include "scull.h"		/* local definitions */
 
+MODULE_AUTHOR("Adam Pinarbasi");
 MODULE_LICENSE("Dual BSD/GPL");
 
 unsigned int scull_minor = 0;
@@ -23,8 +24,6 @@ struct scull_device {
    struct mutex mutex;
 };
 struct scull_device sdev;
-
-/* Declaration of scull functions */
 
 struct file_operations scull_fops = {
    owner:    THIS_MODULE,
@@ -116,7 +115,7 @@ static void reg_cdev(void)
    if (err) printk(KERN_WARNING "Error adding scull: %d\n", err);
 }
 
-static int scull_init(void)
+static int __init scull_init(void)
 {
    int result;
    struct scull_qset *this_qset;
