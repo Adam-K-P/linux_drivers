@@ -13,6 +13,11 @@
 #include <linux/fcntl.h>	/* O_ACCMODE */
 #include <linux/seq_file.h>
 #include <linux/cdev.h>
+#include <linux/string.h>
+#include <linux/mm.h>
+#include <linux/memblock.h>
+#include <linux/smp.h>
+#include <linux/pfn.h>
 #include <asm/uaccess.h>	/* copy_*_user */
 
 int mem_open (struct inode *, struct file *);

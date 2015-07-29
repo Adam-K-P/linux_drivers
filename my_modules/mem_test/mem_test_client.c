@@ -16,8 +16,8 @@ static void error(const char *function, const char *message)
 
 int main (void) 
 {
-   int err = open("/dev/scull", O_RDWR);
-   //if (err < 0) error("main", "Unable to open file");
+   int err = open("/dev/mem_test", O_RDWR);
+   if (err < 0) error("main", "Unable to open file");
    close(err);
    return EXIT_SUCCESS;
 }
