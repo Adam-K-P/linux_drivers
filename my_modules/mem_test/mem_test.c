@@ -1,4 +1,4 @@
-include "mem_test.h" // Everything 
+#include "mem_test.h" // Everything 
 
 MODULE_AUTHOR("Adam Pinarbasi");
 MODULE_LICENSE("Dual BSD/GPL");
@@ -53,7 +53,7 @@ struct mem_device {
    struct mem_list *mem;
    struct cdev mem_cdev;
    unsigned long size;
-   long unsigned int nr_tests;
+   unsigned long nr_tests;
 };
 struct mem_device mem_dev;
 
@@ -80,9 +80,15 @@ ssize_t mem_write (struct file *filp, const char __user *buf, size_t count,
                    loff_t *f_pos) 
 {
    int res;
+   char *kern_buf; 
    printk(KERN_NOTICE "Write begin\n");
-   if (kstrtoul(buf, 0, &mem_dev.nr_tests) < 0) 
+   kern_buf = kmalloc(count, GFP_KERNEL);
+   if (_copy_from_user(kern_buf, buf, count < 0))
+      printk(KERN_WARNING "Error reading user input\n");
+   printk(KERN_NOTICE "read: %s from user\n", kern_buf);
+   if (kstrtoul(kern_buf, 0, &(mem_dev.nr_tests)) < 0) 
       printk(KERN_WARNING "Unable to read input\n");
+   printk(KERN_NOTICE "read: %lu from user\n", mem_dev.nr_tests);
    return 0;
 }
 
