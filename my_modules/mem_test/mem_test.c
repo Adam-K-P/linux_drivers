@@ -79,15 +79,21 @@ ssize_t mem_read (struct file *filp, char __user *buf, size_t count,
 ssize_t mem_write (struct file *filp, const char __user *buf, size_t count,
                    loff_t *f_pos) 
 {
-   int res;
    char *kern_buf; 
    printk(KERN_NOTICE "Write begin\n");
    kern_buf = kmalloc(count, GFP_KERNEL);
-   if (_copy_from_user(kern_buf, buf, count < 0))
+   if (kern_buf == NULL) {
+      printk(KERN_WARNING "mem_write: Unable to allocate buffer memory\n");
+      return -EFAULT;
+   }
+   if (_copy_from_user(kern_buf, buf, count)) {
       printk(KERN_WARNING "Error reading user input\n");
+      return -EFAULT;
+   }
    printk(KERN_NOTICE "read: %s from user\n", kern_buf);
    if (kstrtoul(kern_buf, 0, &(mem_dev.nr_tests)) < 0) 
       printk(KERN_WARNING "Unable to read input\n");
+   *f_pos += (loff_t)count;
    printk(KERN_NOTICE "read: %lu from user\n", mem_dev.nr_tests);
    return 0;
 }
@@ -109,7 +115,6 @@ static void __init reg_cdev (void)
    err = cdev_add(&mem_dev.mem_cdev, dev_err, 1);
    if (err) printk(KERN_WARNING "Error adding mem_dev: %d\n", err);
 }
-
 
 static int __init mem_test_init (void)
 {

@@ -16,10 +16,10 @@ default:
 endif
 
 client:
-	gcc -std=c11 -Wall -Wextra -o test mem_test_client.c
+	gcc -std=gnu99 -Wall -Wextra -o test mem_test_client.c
 
 clean:
-	rm -rf *.o *.ko *~ core .depend *.mod.c .*.cmd .tmp_versions .*.o.d .*.swp test
+	rm -rf *.o *.ko *~ core .depend *.mod.c .*.cmd .tmp_versions .*.o.d *.swp test
 
 depend .depend dep:
 	$(CC) $(CFLAGS) -M *.c > .depend
