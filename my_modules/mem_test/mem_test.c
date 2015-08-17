@@ -86,6 +86,7 @@ ssize_t mem_write (struct file *filp, const char __user *buf, size_t count,
       printk(KERN_WARNING "mem_write: Unable to allocate buffer memory\n");
       return -EFAULT;
    }
+   memset(kern_buf, 0, count);
    if (_copy_from_user(kern_buf, buf, count)) {
       printk(KERN_WARNING "Error reading user input\n");
       return -EFAULT;
@@ -95,7 +96,7 @@ ssize_t mem_write (struct file *filp, const char __user *buf, size_t count,
       printk(KERN_WARNING "Unable to read input\n");
    *f_pos += (loff_t)count;
    printk(KERN_NOTICE "read: %lu from user\n", mem_dev.nr_tests);
-   return 0;
+   return (ssize_t)count;
 }
 
 static void mem_test_clean (void)
