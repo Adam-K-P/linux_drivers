@@ -94,6 +94,7 @@ ssize_t mem_write (struct file *filp, const char __user *buf, size_t count,
    printk(KERN_NOTICE "read: %s from user\n", kern_buf);
    if (kstrtoul(kern_buf, 0, &(mem_dev.nr_tests)) < 0) 
       printk(KERN_WARNING "Unable to read input\n");
+   kfree(kern_buf);
    *f_pos += (loff_t)count;
    printk(KERN_NOTICE "read: %lu from user\n", mem_dev.nr_tests);
    return (ssize_t)count;

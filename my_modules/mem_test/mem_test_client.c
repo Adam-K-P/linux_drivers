@@ -21,6 +21,8 @@ static void test_memory (int device)
    while (fgets(buffer, MAX_SIZE, stdin) != NULL) {
       if (*buffer == 'q') break; //no command can start with 'q'
       char *input = strdup(buffer);
+      for (size_t i = 0; i < strlen(input); ++i) //FIXME fucking c strings...
+         if (input[i] == '\n') input[i] = '\0';
       if (write(device, (const void *)input, strlen(input)) < 0)
          error("test_memory", "error writing to file");
       free(input);
