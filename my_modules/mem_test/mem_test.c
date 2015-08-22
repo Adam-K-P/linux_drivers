@@ -1,5 +1,6 @@
 /* mem_test.c */
 /* Written by Adam Pinarbasi */
+/* compatible with 64 bit or 32 bit architectures */
 
 #include <linux/module.h>
 #include <linux/moduleparam.h>
@@ -47,7 +48,7 @@ static u64 patterns[] = {
 };
 
 #else
-#define ENVIRONMENT32
+#define ENVIRONMENT32 
 
 static u32 patterns[] = {
    //default patterns unless otherwise specified
@@ -166,7 +167,7 @@ static ssize_t perf_comm (char *command)
    int i = 0;
    if (*command == 'p') {
       char *new_comm = kmalloc(strlen(command) - 1, GFP_KERNEL);
-      for (; i < strlen(command) - 1; ++i) 
+      for (; i < strlen(command) - 1; ++i) //drop the first char
          new_comm[i] = command[i + 1];
       printk(KERN_NOTICE "%s\n", new_comm);
       kfree(new_comm);
@@ -204,23 +205,27 @@ ssize_t mem_write (struct file *filp, const char __user *buf, size_t count,
                    loff_t *f_pos) 
 {
    char *command; 
+   long ret;
    printk(KERN_NOTICE "Write begin\n");
    command = kmalloc(count, GFP_KERNEL);
-   memset(command, 0, count);
+   memset((void *)command, 0, count);
 
-   if (_copy_from_user(command, buf, count)) {
+   ret = strncpy_from_user(command, buf, (long)count);
+   if (ret < 0) {
       printk(KERN_WARNING "Error reading user input\n");
       return -EFAULT;
    }
    printk(KERN_NOTICE "read: %s from user\n", command);
-   /*if (kstrtoul(kern_buf, 0, &(mem_dev.nr_tests)) < 0) 
+   /*if (kstrtoul(commandnd, 0, &(mem_dev.nr_tests)) < 0) 
       printk(KERN_WARNING "Improper input from user\n");*/
    perf_comm(command);
 
    kfree(command);
-   *f_pos += (loff_t)count;
+   *f_pos += (loff_t)ret;
+   if (*f_pos >= (loff_t)count) 
+      return 0;
    //printk(KERN_NOTICE "read: %lu from user\n", mem_dev.nr_tests);
-   return (ssize_t)count;
+   return (ssize_t)ret;
 }
 
 static void mem_test_clean (void)
