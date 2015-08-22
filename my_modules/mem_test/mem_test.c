@@ -1,10 +1,31 @@
-#include "mem_test.h" // Everything 
+/* mem_test.c */
+/* Written by Adam Pinarbasi */
+
+#include <linux/module.h>
+#include <linux/moduleparam.h>
+#include <linux/init.h>
+#include <linux/kernel.h>	/* printk() */
+#include <linux/slab.h>		/* kmalloc() */
+#include <linux/fs.h>		/* everything... */
+#include <linux/errno.h>	/* error codes */
+#include <linux/types.h>	/* size_t */
+#include <linux/proc_fs.h>
+#include <linux/fcntl.h>	/* O_ACCMODE */
+#include <linux/seq_file.h>
+#include <linux/cdev.h>
+#include <linux/string.h>
+#include <linux/mm.h>
+#include <asm/uaccess.h>
 
 MODULE_AUTHOR("Adam Pinarbasi");
 MODULE_LICENSE("Dual BSD/GPL");
 
+#if __x86_64__ || __ppc64__
+#define ENVIRONMENT64
+
 static u64 patterns[] = {
    //default patterns unless otherwise specified
+   //for 64 bit systems
    //17 entries in total
 	0,
 	0xffffffffffffffffULL,
@@ -22,11 +43,45 @@ static u64 patterns[] = {
 	0xbbbbbbbbbbbbbbbbULL,
 	0xddddddddddddddddULL,
 	0xeeeeeeeeeeeeeeeeULL,
-	0x7a6c7258554e494cULL, /* yeah ;-) */
+	0x7a6c7258554e494cULL, 
 };
+
+#else
+#define ENVIRONMENT32
+
+static u32 patterns[] = {
+   //default patterns unless otherwise specified
+   //for 32 bit systems
+   //17 entries in total
+	0,
+	0xffffffffULL,
+	0x55555555ULL,
+	0xaaaaaaaaULL,
+	0x11111111ULL,
+	0x22222222ULL,
+	0x44444444ULL,
+	0x88888888ULL,
+	0x33333333ULL,
+	0x66666666ULL,
+	0x99999999ULL,
+	0xccccccccULL,
+	0x77777777ULL,
+	0xbbbbbbbbULL,
+	0xddddddddULL,
+	0xeeeeeeeeULL,
+	0x73ae498cULL, 
+};
+
+#endif 
 
 unsigned int mem_minor = 0;
 unsigned int mem_major;
+
+/* Function declarations */
+int mem_open (struct inode *, struct file *);
+int mem_release (struct inode *, struct file *);
+ssize_t mem_read (struct file *, char __user *, size_t, loff_t *);
+ssize_t mem_write (struct file *, const char __user *, size_t, loff_t *);
 
 struct file_operations mem_fops = {
    owner:   THIS_MODULE,
@@ -42,6 +97,7 @@ struct mem_block {
    struct mem_block *next;
 };
 
+//implements list data structure of mem_blocks
 struct mem_list {
    int length;
    struct mem_block *head;
@@ -53,8 +109,25 @@ struct mem_device {
    struct cdev mem_cdev;
    unsigned long size;
    unsigned long nr_tests;
+   int b64; //specifies architecture
+
+#ifdef ENVIRONMENT64
+   u64 user_pattern;
+#else
+   u32 user_pattern;
+#endif
 };
 struct mem_device mem_dev;
+
+static void initialize_mem_list (void) 
+{
+   mem_dev.mem = kmalloc(sizeof(struct mem_list), GFP_KERNEL);
+   memset(mem_dev.mem, 0, sizeof(struct mem_list));
+
+   mem_dev.mem->length = 0;
+   mem_dev.mem->head   = NULL;
+   mem_dev.mem->tail   = NULL;
+}
 
 static void clear_list (void) 
 {
@@ -88,6 +161,19 @@ static void add_block (unsigned long addr, unsigned long leng)
    mem_dev.mem->tail = this_block;
 }
 
+static ssize_t perf_comm (char *command)
+{
+   int i = 0;
+   if (*command == 'p') {
+      char *new_comm = kmalloc(strlen(command) - 1, GFP_KERNEL);
+      for (; i < strlen(command) - 1; ++i) 
+         new_comm[i] = command[i + 1];
+      printk(KERN_NOTICE "%s\n", new_comm);
+      kfree(new_comm);
+   }
+   return 0;
+}
+
 /*static ssize_t test_mem (struct file *filp) 
 {
    return 0;
@@ -96,6 +182,7 @@ static void add_block (unsigned long addr, unsigned long leng)
 int mem_open (struct inode *inode, struct file *filp) 
 {
    printk(KERN_NOTICE "Opening file\n");
+   initialize_mem_list();
    return 0;
 }
 
@@ -116,22 +203,23 @@ ssize_t mem_read (struct file *filp, char __user *buf, size_t count,
 ssize_t mem_write (struct file *filp, const char __user *buf, size_t count,
                    loff_t *f_pos) 
 {
-   char *kern_buf; 
+   char *command; 
    printk(KERN_NOTICE "Write begin\n");
-   kern_buf = kmalloc(count, GFP_KERNEL);
-   memset(kern_buf, 0, count);
+   command = kmalloc(count, GFP_KERNEL);
+   memset(command, 0, count);
 
-   if (_copy_from_user(kern_buf, buf, count)) {
+   if (_copy_from_user(command, buf, count)) {
       printk(KERN_WARNING "Error reading user input\n");
       return -EFAULT;
    }
-   printk(KERN_NOTICE "read: %s from user\n", kern_buf);
-   if (kstrtoul(kern_buf, 0, &(mem_dev.nr_tests)) < 0) 
-      printk(KERN_WARNING "Improper input from user\n");
+   printk(KERN_NOTICE "read: %s from user\n", command);
+   /*if (kstrtoul(kern_buf, 0, &(mem_dev.nr_tests)) < 0) 
+      printk(KERN_WARNING "Improper input from user\n");*/
+   perf_comm(command);
 
-   kfree(kern_buf);
+   kfree(command);
    *f_pos += (loff_t)count;
-   printk(KERN_NOTICE "read: %lu from user\n", mem_dev.nr_tests);
+   //printk(KERN_NOTICE "read: %lu from user\n", mem_dev.nr_tests);
    return (ssize_t)count;
 }
 
@@ -153,20 +241,16 @@ static void __init reg_cdev (void)
    if (err) printk(KERN_WARNING "Error adding mem_dev: %d\n", err);
 }
 
-static void __init initialize_mem_list (void) 
-{
-   mem_dev.mem = kmalloc(sizeof(struct mem_list), GFP_KERNEL);
-   memset(mem_dev.mem, 0, sizeof(struct mem_list));
-
-   mem_dev.mem->length = 0;
-   mem_dev.mem->head   = NULL;
-   mem_dev.mem->tail   = NULL;
-}
-
 static int __init mem_test_init (void)
 {
    printk(KERN_NOTICE "Module starting\n");
-   initialize_mem_list();
+
+#ifdef ENVIRONMENT64
+   mem_dev.b64 = 1;
+#else
+   mem_dev.b64 = 0;
+#endif
+
    mem_major = register_chrdev(0, "mem_test", &mem_fops);
    if (mem_major < 0) {
       printk(KERN_WARNING "mem_test: can't get major number\n");
