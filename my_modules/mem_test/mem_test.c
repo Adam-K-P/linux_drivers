@@ -44,7 +44,7 @@ static u64 patterns[] = {
 	0xbbbbbbbbbbbbbbbbULL,
 	0xddddddddddddddddULL,
 	0xeeeeeeeeeeeeeeeeULL,
-	0x7a6c7258554e494cULL, 
+	0x7a6c7258554e494cULL,  /* Yeah ;-) */
 };
 
 #else
@@ -70,7 +70,7 @@ static u32 patterns[] = {
 	0xbbbbbbbbULL,
 	0xddddddddULL,
 	0xeeeeeeeeULL,
-	0x73ae498cULL, 
+	0x73ae498cULL, /* lulz ;-) */
 };
 
 #endif 
@@ -162,15 +162,74 @@ static void add_block (unsigned long addr, unsigned long leng)
    mem_dev.mem->tail = this_block;
 }
 
-static ssize_t perf_comm (char *command)
+static char *extract_digs (char *command) 
 {
    int i = 0;
+   char *new_comm = kmalloc(strlen(command), GFP_KERNEL);
+   for (; i < strlen(command); ++i) {
+      char this_c = command[i + 1];
+      if ((this_c > '9' || this_c < '0') && this_c != '\0') {
+         printk(KERN_WARNING "Improper input from user\n");
+         return NULL;
+      }
+      new_comm[i] = command[i + 1];
+   }
+   return new_comm;
+}
+
+static ssize_t handle_pattern (char *command) 
+{
+   ssize_t err;
+   char *new_comm = extract_digs(command);
+   if (new_comm == NULL) {
+      printk(KERN_WARNING "Improper input from user\n");
+      return -ERANGE;
+   }
+#ifdef ENVIRONMENT64
+      err = kstrtou64(new_comm, 0, &(mem_dev.user_pattern));
+#else
+      err = kstrtou32(new_comm, 0, &(mem_dev.user_pattern));
+#endif
+   if (err < 0) {
+      printk(KERN_WARNING "Improper input from user\n");
+      return err;
+   }
+   printk(KERN_NOTICE "%llu\n", mem_dev.user_pattern);
+   kfree(new_comm);
+   return 0;
+}
+
+static ssize_t handle_num (char *command) 
+{
+   ssize_t err;
+   char *new_comm = extract_digs(command);
+   if (new_comm == NULL) {
+      printk(KERN_WARNING "Improper input from user\n");
+      return -ERANGE;
+   }
+   err = kstrtoul(new_comm, 0, &(mem_dev.nr_tests));
+   if (err < 0) {
+      printk(KERN_WARNING "Improper input from user\n");
+      return err;
+   }
+   printk(KERN_NOTICE "%lu\n", mem_dev.nr_tests);
+   kfree(new_comm);
+   return 0;
+}
+
+static ssize_t perf_comm (char *command)
+{
+   ssize_t err;
+
    if (*command == 'p') {
-      char *new_comm = kmalloc(strlen(command) - 1, GFP_KERNEL);
-      for (; i < strlen(command) - 1; ++i) //drop the first char
-         new_comm[i] = command[i + 1];
-      printk(KERN_NOTICE "%s\n", new_comm);
-      kfree(new_comm);
+      err = handle_pattern(command);
+      if (err < 0) 
+         return err;
+   }
+   if (*command == 'n') {
+      err = handle_num(command);
+      if (err < 0) 
+         return err;
    }
    return 0;
 }
@@ -206,6 +265,7 @@ ssize_t mem_write (struct file *filp, const char __user *buf, size_t count,
 {
    char *command; 
    long ret;
+   ssize_t err;
    printk(KERN_NOTICE "Write begin\n");
    command = kmalloc(count, GFP_KERNEL);
    memset((void *)command, 0, count);
@@ -216,15 +276,15 @@ ssize_t mem_write (struct file *filp, const char __user *buf, size_t count,
       return -EFAULT;
    }
    printk(KERN_NOTICE "read: %s from user\n", command);
-   /*if (kstrtoul(commandnd, 0, &(mem_dev.nr_tests)) < 0) 
-      printk(KERN_WARNING "Improper input from user\n");*/
-   perf_comm(command);
+
+   err = perf_comm(command);
+   if (err < 0) 
+      return err;
 
    kfree(command);
    *f_pos += (loff_t)ret;
    if (*f_pos >= (loff_t)count) 
       return 0;
-   //printk(KERN_NOTICE "read: %lu from user\n", mem_dev.nr_tests);
    return (ssize_t)ret;
 }
 
@@ -250,11 +310,12 @@ static int __init mem_test_init (void)
 {
    printk(KERN_NOTICE "Module starting\n");
 
-#ifdef ENVIRONMENT64
+//might be redundant?
+/*#ifdef ENVIRONMENT64
    mem_dev.b64 = 1;
 #else
    mem_dev.b64 = 0;
-#endif
+#endif*/
 
    mem_major = register_chrdev(0, "mem_test", &mem_fops);
    if (mem_major < 0) {
