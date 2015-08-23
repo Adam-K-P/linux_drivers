@@ -34,11 +34,10 @@ static void print_help (void)
           "ex: 1a, 2a, 1b, etc.\n\n"
 
 
-          "'m' allows the user to specify the start of a memory block\n"
-          "ex: m018987987876\n"
-          "specifies the address 018987987876\n"
-          "must then be followed by the length of the memory block\n"
-          "ex: 200\n"
+          "'m' allows the user to specify the start of a memory block"
+                  "and its length\n"
+          "ex: m018987987876 200\n"
+          "specifies the address 018987987876 with length of 200\n"
           "would specify a memory block as being from"
                                   "018987987876 - 018987988076\n\n"
 
