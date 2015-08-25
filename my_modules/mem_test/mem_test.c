@@ -17,6 +17,7 @@
 #include <linux/string.h>
 #include <linux/mm.h>
 #include <asm/uaccess.h>
+#include <linux/uaccess.h>
 
 MODULE_AUTHOR("Adam Pinarbasi");
 MODULE_LICENSE("Dual BSD/GPL");
@@ -92,6 +93,9 @@ struct file_operations mem_fops = {
    write:   mem_write, 
 };
 
+/*---------------------------------------------------------------------------*/
+// Data structures used in this module 
+
 struct mem_block {
    char *identifier;
    unsigned long addr;
@@ -120,6 +124,55 @@ struct mem_device {
 
 };
 struct mem_device mem_dev;
+
+/*---------------------------------------------------------------------------*/
+
+/*---------------------------------------------------------------------------*/
+// Functions for testing memory corruption
+// maccess.c has functions for this
+
+static ssize_t do_one_pass (u64 pattern) 
+{
+   long err;
+   void *buff = kmalloc(sizeof(void *) * (size_t)mem_dev.mem->head->leng,
+                        GFP_KERNEL);
+
+   err = __probe_kernel_write((void *)mem_dev.mem->head->addr, 
+                              (const void *)&pattern,
+                              (size_t)mem_dev.mem->head->leng);
+   if (err < 0) {
+      printk(KERN_WARNING "mem_test: cannot write to address\n");
+      return (ssize_t)err;
+   }
+   
+   err = __probe_kernel_read(buff, 
+                            (const void *)mem_dev.mem->head->addr, 
+                            (size_t)mem_dev.mem->head->leng); 
+   if (err < 0) {
+      printk(KERN_WARNING "mem_test: cannot read from address\n");
+      return (ssize_t)err;
+   }
+
+   return 0;
+}
+
+static ssize_t test_mem (void) 
+{
+   unsigned int i, j;
+
+   printk(KERN_INFO "mem_test: performing %lu tests\n", mem_dev.nr_tests);
+   for (i = 0; i < mem_dev.nr_tests; ++i) {
+      for (j = 0; j < ARRAY_SIZE(patterns); ++j) 
+         do_one_pass(patterns[j]);
+   }
+
+   return 0;
+}
+
+/*---------------------------------------------------------------------------*/
+
+/*---------------------------------------------------------------------------*/
+//Data structure manipulation functions
 
 static void initialize_mem_list (void) 
 {
@@ -173,6 +226,11 @@ static void add_block (unsigned long addr, unsigned long leng)
    mem_dev.mem->tail->next = this_block;
    mem_dev.mem->tail = this_block;
 }
+
+/*---------------------------------------------------------------------------*/
+
+/*---------------------------------------------------------------------------*/
+// Functions for handling user input
 
 static char *extract_digs (char *command) 
 {
@@ -271,10 +329,10 @@ static ssize_t handle_mem (char *command)
          space = 1;
          continue;
       }
-      if ((this_c > '9' || this_c < '0') && this_c != '\0') {
+      /*if ((this_c > '9' || this_c < '0') && this_c != '\0') {
          printk(KERN_WARNING "Improper input from user\n");
          return -EINVAL; 
-      }
+      }*/
       if (space == 0) {
          ++addr_l;
          continue;
@@ -304,10 +362,10 @@ static ssize_t perf_comm (char *command)
    return 0;
 }
 
-/*static ssize_t test_mem (struct file *filp) 
-{
-   return 0;
-}*/
+/*---------------------------------------------------------------------------*/
+
+/*---------------------------------------------------------------------------*/
+// Driver functions
 
 int mem_open (struct inode *inode, struct file *filp) 
 {
@@ -364,6 +422,11 @@ ssize_t mem_write (struct file *filp, const char __user *buf, size_t count,
    return (ssize_t)ret;
 }
 
+/*---------------------------------------------------------------------------*/
+
+/*---------------------------------------------------------------------------*/
+// Functions for loading/unloading module
+
 static void mem_test_clean (void)
 {
    printk(KERN_NOTICE "Cleaning up module\n");
@@ -396,6 +459,8 @@ static int __init mem_test_init (void)
    printk(KERN_NOTICE "mem_test: major number is %d\n", mem_major);
    return 0;
 }
+
+/*---------------------------------------------------------------------------*/
 
 module_init(mem_test_init);
 module_exit(mem_test_clean);
