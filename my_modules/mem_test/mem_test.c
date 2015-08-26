@@ -1,6 +1,5 @@
 /* mem_test.c */
 /* Written by Adam Pinarbasi */
-/* compatible with 64 bit or 32 bit architectures */
 
 #include <linux/module.h>
 #include <linux/moduleparam.h>
@@ -22,13 +21,9 @@
 MODULE_AUTHOR("Adam Pinarbasi");
 MODULE_LICENSE("Dual BSD/GPL");
 
-#if __x86_64__ || __ppc64__
-#define ENVIRONMENT64
-
 static u64 patterns[] = {
    //default patterns unless otherwise specified
    //for 64 bit systems
-   //17 entries in total
 	0,
 	0xffffffffffffffffULL,
 	0x5555555555555555ULL,
@@ -47,34 +42,6 @@ static u64 patterns[] = {
 	0xeeeeeeeeeeeeeeeeULL,
 	0x7a6c7258554e494cULL,  /* Yeah ;-) */
 };
-
-#else
-#define ENVIRONMENT32 
-
-static u32 patterns[] = {
-   //default patterns unless otherwise specified
-   //for 32 bit systems
-   //17 entries in total
-	0,
-	0xffffffffULL,
-	0x55555555ULL,
-	0xaaaaaaaaULL,
-	0x11111111ULL,
-	0x22222222ULL,
-	0x44444444ULL,
-	0x88888888ULL,
-	0x33333333ULL,
-	0x66666666ULL,
-	0x99999999ULL,
-	0xccccccccULL,
-	0x77777777ULL,
-	0xbbbbbbbbULL,
-	0xddddddddULL,
-	0xeeeeeeeeULL,
-	0x73ae498cULL, /* lulz ;-) */
-};
-
-#endif 
 
 unsigned int mem_minor = 0;
 unsigned int mem_major;
@@ -115,12 +82,7 @@ struct mem_device {
    struct cdev mem_cdev;
    unsigned long size;
    unsigned long nr_tests;
-
-#ifdef ENVIRONMENT64
    u64 user_pattern;
-#else
-   u32 user_pattern;
-#endif
 
 };
 struct mem_device mem_dev;
@@ -258,12 +220,7 @@ static ssize_t handle_pattern (char *command)
       return -EINVAL;
    }
 
-#ifdef ENVIRONMENT64
-      err = kstrtou64(new_comm, 0, &(mem_dev.user_pattern));
-#else
-      err = kstrtou32(new_comm, 0, &(mem_dev.user_pattern));
-#endif
-
+   err = kstrtou64(new_comm, 0, &(mem_dev.user_pattern));
    if (err < 0) {
       printk(KERN_WARNING "Improper input from user\n");
       return err;
@@ -329,10 +286,6 @@ static ssize_t handle_mem (char *command)
          space = 1;
          continue;
       }
-      /*if ((this_c > '9' || this_c < '0') && this_c != '\0') {
-         printk(KERN_WARNING "Improper input from user\n");
-         return -EINVAL; 
-      }*/
       if (space == 0) {
          ++addr_l;
          continue;
