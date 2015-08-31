@@ -1,6 +1,5 @@
 /* mem_test.c */
 /* Written by Adam Pinarbasi */
-/* git test */
 
 #include <linux/module.h>
 #include <linux/moduleparam.h>
