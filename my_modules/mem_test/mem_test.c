@@ -15,8 +15,10 @@
 #include <linux/cdev.h>
 #include <linux/string.h>
 #include <linux/mm.h>
-#include <asm/uaccess.h>
+#include <linux/mmzone.h>
 #include <linux/uaccess.h>
+#include <asm/uaccess.h>
+#include <asm/page.h>
 
 MODULE_AUTHOR("Adam Pinarbasi");
 MODULE_LICENSE("Dual BSD/GPL");
@@ -90,32 +92,46 @@ struct mem_device mem_dev;
 /*---------------------------------------------------------------------------*/
 
 /*---------------------------------------------------------------------------*/
+// Functions for testing low memory conditions
+
+//This is where my functions would go ... IF I HAD ANY
+
+/*---------------------------------------------------------------------------*/
+
+/*---------------------------------------------------------------------------*/
 // Functions for testing memory corruption
 // maccess.c has functions for this
 
-static ssize_t do_one_pass (u64 pattern) 
+static void do_one_pass (u64 pattern) 
 {
+   u64 *p, *start, *end;
+   phys_addr_t start_phys_aligned;
+   phys_addr_t start_bad = 0, last_bad = 0;
+   const size_t incr = sizeof(pattern);
    long err;
-   void *buff = kmalloc(sizeof(void *) * (size_t)mem_dev.mem->head->leng,
-                        GFP_KERNEL);
 
-   err = __probe_kernel_write((void *)mem_dev.mem->head->addr, 
-                              (const void *)&pattern,
-                              (size_t)mem_dev.mem->head->leng);
-   if (err < 0) {
-      printk(KERN_WARNING "mem_test: cannot write to address\n");
-      return (ssize_t)err;
-   }
-   
-   err = __probe_kernel_read(buff, 
-                            (const void *)mem_dev.mem->head->addr, 
-                            (size_t)mem_dev.mem->head->leng); 
-   if (err < 0) {
-      printk(KERN_WARNING "mem_test: cannot read from address\n");
-      return (ssize_t)err;
-   }
+   start_phys_aligned = ALIGN((phys_addr_t)mem_dev.mem->head->addr, incr);
+   start = __va(start_phys_aligned);
+   end = start + ((phys_addr_t)mem_dev.mem->head->leng 
+                  - (start_phys_aligned 
+                        - (phys_addr_t)mem_dev.mem->head->addr)) / incr;
 
-   return 0;
+   for (p = start; p < end; ++p) 
+      *p = pattern;
+
+   for (p = start; p < end; ++p, start_phys_aligned += incr) {
+      if (*p == pattern)
+         continue;
+      if (start_phys_aligned == last_bad + incr) {
+         last_bad += incr;
+         continue;
+      }
+      if (start_bad)
+         printk(KERN_WARNING "Bad memory found at %llx", *p);
+      start_bad = last_bad = start_phys_aligned;
+   }
+   if (start_bad)
+      printk(KERN_WARNING "Bad memory found at %llx", *p);
 }
 
 static ssize_t test_mem (void) 
@@ -308,6 +324,8 @@ static ssize_t perf_comm (char *command)
       err = handle_num(command);
    if (*command == 'm') 
       err = handle_mem(command);
+   if (*command == 's')
+
    /*if (*command == 'c')
       err = perf_test(command);*/
 
@@ -318,7 +336,7 @@ static ssize_t perf_comm (char *command)
 /*---------------------------------------------------------------------------*/
 
 /*---------------------------------------------------------------------------*/
-// Driver functions
+// Char-device functions
 
 int mem_open (struct inode *inode, struct file *filp) 
 {
