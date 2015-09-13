@@ -21,7 +21,7 @@
 #include <asm/page.h>
 
 MODULE_AUTHOR("Adam Pinarbasi");
-MODULE_LICENSE("Dual BSD/GPL");
+MODULE_LICENSE("Dual BSD/GPL"); 
 
 static u64 patterns[] = {
    //default patterns unless otherwise specified
@@ -82,19 +82,21 @@ struct mem_list {
 struct mem_device {
    struct mem_list *mem;
    struct cdev mem_cdev;
-   unsigned long size;
+   //unsigned long size;
    unsigned long nr_tests;
    u64 user_pattern;
 
 };
 struct mem_device mem_dev;
+//mem_dev.nr_tests = 1;
 
 /*---------------------------------------------------------------------------*/
 
 /*---------------------------------------------------------------------------*/
 // Functions for testing low memory conditions
 
-//This is where my functions would go ... IF I HAD ANY
+
+
 
 /*---------------------------------------------------------------------------*/
 
@@ -102,19 +104,26 @@ struct mem_device mem_dev;
 // Functions for testing memory corruption
 // maccess.c has functions for this
 
+/* Meat of the corruption test occurs in this function
+ * writes a pattern to the specified address
+ * then reads this pattern
+ * if the pattern is the same after the write
+ * then the memory is perfectly fine
+ * if the address read does not contain the written pattern
+ * then the memory is corrupted 
+ * and the corrupted address will be printed to the kernel log */
 static void do_one_pass (u64 pattern) 
 {
    u64 *p, *start, *end;
    phys_addr_t start_phys_aligned;
    phys_addr_t start_bad = 0, last_bad = 0;
    const size_t incr = sizeof(pattern);
-   long err;
 
    start_phys_aligned = ALIGN((phys_addr_t)mem_dev.mem->head->addr, incr);
    start = __va(start_phys_aligned);
    end = start + ((phys_addr_t)mem_dev.mem->head->leng 
                   - (start_phys_aligned 
-                        - (phys_addr_t)mem_dev.mem->head->addr)) / incr;
+                      - (phys_addr_t)mem_dev.mem->head->addr)) / incr;
 
    for (p = start; p < end; ++p) 
       *p = pattern;
@@ -126,7 +135,7 @@ static void do_one_pass (u64 pattern)
          last_bad += incr;
          continue;
       }
-      if (start_bad)
+      if (start_bad) //put this in the read sys-call?
          printk(KERN_WARNING "Bad memory found at %llx", *p);
       start_bad = last_bad = start_phys_aligned;
    }
@@ -268,7 +277,7 @@ static ssize_t handle_num (char *command)
 static ssize_t form_block (char *command, size_t addr_l, size_t leng_l) 
 {
    int i = 0, j = 0;
-   ssize_t err;
+   ssize_t err = 0;
    char *addr_s = kmalloc(addr_l, GFP_KERNEL);
    char *leng_s = kmalloc(leng_l, GFP_KERNEL);
    unsigned long addr, leng;
@@ -280,14 +289,18 @@ static ssize_t form_block (char *command, size_t addr_l, size_t leng_l)
       leng_s[j] = command[i + 1];
 
    err = kstrtoul(addr_s, 0, &addr);
-   if (err < 0) return err;
+   if (err < 0) goto err; // ;-) Yeah
    err = kstrtoul(leng_s, 0, &leng);
-   if (err < 0) return err;
+   if (err < 0) goto err; // ;-) Yeah 
 
    add_block(addr, leng);
    kfree(addr_s);
    kfree(leng_s);
    return 0;
+
+err:
+   printk(KERN_WARNING "kstrtoul error reading input\n");
+   return err;
 }
 
 static ssize_t handle_mem (char *command)
@@ -298,36 +311,31 @@ static ssize_t handle_mem (char *command)
                           // addr_l '\0' byte preemptively accounted for 
    for (; i < strlen(command); ++i) { //just get lengths here
       char this_c = command[i + 1];
-      if (this_c == ' ' && space == 0) {
-         space = 1;
-         continue;
-      }
-      if (space == 0) {
-         ++addr_l;
-         continue;
-      }
+      if (this_c == ' ' && space == 0) space = 1;
+      else if (space == 0) ++addr_l;
       else ++leng_l;
    }
 
+   if (space == 0) goto err;
    err = form_block(command, addr_l, leng_l);
-   if (err < 0) return err;
+   if (err < 0) goto err;
    return 0;
+
+err:
+   printk(KERN_NOTICE "error in function 'handle_mem'\n");
+   return err;
 }
 
 static ssize_t perf_comm (char *command)
 {
    ssize_t err = 0;
 
-   if (*command == 'p') 
-      err = handle_pattern(command);
-   if (*command == 'n') 
-      err = handle_num(command);
-   if (*command == 'm') 
-      err = handle_mem(command);
-   if (*command == 's')
-
-   /*if (*command == 'c')
-      err = perf_test(command);*/
+   if      (*command == 'p') err = handle_pattern(command);
+   else if (*command == 'n') err = handle_num(command);
+   else if (*command == 'm') err = handle_mem(command);
+   else if (*command == 'c') err = test_mem();
+   /*if (*command == 's')*/
+   //need access to functions first...
 
    if (err < 0) return err;
    return 0;

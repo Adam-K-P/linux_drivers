@@ -1,0 +1,31 @@
+mem_test
+
+written by Adam Pinarbasi
+
+This is a program that tests memory corruption in 64 bit Linux systems.
+Instructions on using this program are given by the "help" command.
+To download this program you may use "git clone" to put it into your directory.
+
+This program will test memory while the computer is online, but will not tests
+memory being used by the operating system.
+
+If you need to test all the memory in your system, please use memtestx86 which
+is included in the kernel build.
+
+It is up to you to ensure that you are testing appropriate addresses.  If you
+test an inappropriate kernel address (which you may do) you could potentially 
+crash your system.
+
+You can also crash user processes by testing random addresses so please do not
+do this.
+
+This program is released under the GPL license so you may do with it however 
+you please.
+
+This is part of a school project.  This program is written as a kernel driver.
+If you intend on seriously using this, you may note that this can be done in
+user space, potentially.  This is by design, as this is an exercise in kernel
+drivers.
+
+CMPS 104a w/ Professor Mackey.  September 5, 2015.
+
