@@ -1,1 +1,34 @@
-These are modules that I have totally written myself (with, of course, help from the ldd3 book).  My goal in these modules is to implement the features that the book discusses without just copying their examples.  In fact, the examples in the book are old enough that they won't even compile on a modern kernel, and some of their methods are deprecated, so major changes have to be made regardless.
+Adam Pinarbasi
+
+I have worked on the following Linux drivers:
+
+
+
+scull
+_____
+
+A Simple Character Utilitly for Loading Localities.
+
+This program is very similar to the ldd3 "scull" example, but is not as complex.
+
+All this program does is reads a string from user space, stores it into kernel
+space, then writes it back to user space.
+
+
+
+mem_test
+________
+
+A program for testing memory.
+
+The program offers two memory tests. 
+
+The first is a memory corruption test.  It works by testing some chunk of memory
+specified by the user.
+
+The second tests your system's operation under low-memory conditions.  It does 
+this by either holding some amount of memory specified by the user or reserving 
+all available memory.
+
+
+
