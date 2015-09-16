@@ -1,4 +1,18 @@
 Adam Pinarbasi
 
-A collection of some projects I'm doing with the Linux kernel.
+Drivers
+_______
+
+This repository contains the work that I've been doing with the Linux kernel.
+Linux Device Drivers 3rd Edition, The Linux Kernel in a Nutshell, Linux Systems
+Programming, and the internet were all reffered to extensively for this project.
+
+The directory 'ldd3-examples' contains examples from Linux Device Drivers 3rd
+Edition that are compilable/runnable with a modern Linux kernel.  I did not 
+write these drivers, though I made small, occassional edits on a few files.
+
+
+
+
+
 

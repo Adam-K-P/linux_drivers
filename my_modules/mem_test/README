@@ -1,31 +1,30 @@
+Adam Pinarbasi
+
 mem_test
 
-written by Adam Pinarbasi
+This is a program that can test memory corruption at specified addresses and
+test a system under low-memory conditions.
 
-This is a program that tests memory corruption in 64 bit Linux systems.
-Instructions on using this program are given by the "help" command.
-To download this program you may use "git clone" to put it into your directory.
 
-This program will test memory while the computer is online, but will not tests
-memory being used by the operating system.
 
-If you need to test all the memory in your system, please use memtestx86 which
-is included in the kernel build.
+Memory corruption test
+______________________
 
-It is up to you to ensure that you are testing appropriate addresses.  If you
-test an inappropriate kernel address (which you may do) you could potentially 
-crash your system.
+mem_test tests for memory corruption with the established method used by 
+mm/memtest.c.
 
-You can also crash user processes by testing random addresses so please do not
-do this.
+Namely, it writes a pattern to an address then reads back the data at that
+address.  If the data at the address matches the data originally written
+to the address, then the memory is fine -- if the data differs from the 
+tested pattern though, the memory is corrupted.
 
-This program is released under the GPL license so you may do with it however 
-you please.
 
-This is part of a school project.  This program is written as a kernel driver.
-If you intend on seriously using this, you may note that this can be done in
-user space, potentially.  This is by design, as this is an exercise in kernel
-drivers.
 
-CMPS 104a w/ Professor Mackey.  September 5, 2015.
+Memory stress test
+__________________
 
+mem_test can test a system under low-memory conditions too.  It performs this
+by allocating some amount of memory if a quantity is specified by the user, or
+it simply aquires every free page -- forcing every program without memory 
+already set aside for use to use swap files: causing a great deal of strain
+on a system.

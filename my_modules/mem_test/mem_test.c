@@ -1,5 +1,27 @@
-/* mem_test.c */
-/* Written by Adam Pinarbasi */
+/* Adam Pinarbasi
+ *
+ * This is a program that tests memory in two ways.
+ *
+ * It can test for memory corruption at an address specified by the user (with
+ * a length specified by the user as well).  If a bad address is specified by 
+ * the user this will almost definitely crash the computer.
+ *
+ * It can also test a computer under low-memory conditions.  The amount of 
+ * memory to be taken can be specified, or the computer can be forced to
+ * put all memory not already located in pages into swap files.  The
+ * stress test functions have the potential to crash the computer if used
+ * improperly by the user 
+ *
+ *
+ * This  program is free software: you can redistribute it and/or modify it 
+ * under the terms of the GNU General Public License as published by the Free
+ * Software Foundation, either version 3 of the License, or (at your option) any
+ * later version.  This program is distributed in the hope that it will be 
+ * useful, but WITHOUT ANY WARRANTY; without even the implied warranty of 
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General 
+ * Public License for more details.  You should have received a copy of the GNU 
+ * General Public License along with this program.  If not, see 
+ * <http://www.gnu.org/licenses/>. */
 
 #include <linux/module.h>
 #include <linux/moduleparam.h>
@@ -95,23 +117,29 @@ struct mem_device mem_dev;
 /*---------------------------------------------------------------------------*/
 // Functions for testing low memory conditions
 
+/* The stress test is going to be performed by allocating a 
+ * single page at a time.  The computer operator can then
+ * see how responsive there system is when all RAM is 
+ * taken and all programs are using swap files */
 
-
+static void stress_test (void) {
+   while (1) 
+      alloc_page(__GFP_NOFAIL);
+}
 
 /*---------------------------------------------------------------------------*/
 
 /*---------------------------------------------------------------------------*/
 // Functions for testing memory corruption
-// maccess.c has functions for this
 
-/* Meat of the corruption test occurs in this function
- * writes a pattern to the specified address
- * then reads this pattern
- * if the pattern is the same after the write
- * then the memory is perfectly fine
- * if the address read does not contain the written pattern
- * then the memory is corrupted 
- * and the corrupted address will be printed to the kernel log */
+/* do_one_pass 
+ * This is the primary function for testing memory corruption.  
+ *
+ * It works by simply writing a pattern to an address then reading the memory
+ * at that address.  If the pattern has changed, then the memory is corrupt 
+ *
+ * The code is heavily borrowed from mm/memtest.c (in the Linux source code) */
+
 static void do_one_pass (u64 pattern) 
 {
    u64 *p, *start, *end;
@@ -334,8 +362,7 @@ static ssize_t perf_comm (char *command)
    else if (*command == 'n') err = handle_num(command);
    else if (*command == 'm') err = handle_mem(command);
    else if (*command == 'c') err = test_mem();
-   /*if (*command == 's')*/
-   //need access to functions first...
+   else if (*command == 's') stress_test();
 
    if (err < 0) return err;
    return 0;
@@ -361,9 +388,11 @@ int mem_release (struct inode *inode, struct file *filp)
    return 0;
 }
 
-/* read system call is used to send information back to client 
+/* mem_read 
+ * read system call is used to send information back to client 
    more specifically, it will return the identifier of the last
    mem_block added*/
+
 ssize_t mem_read (struct file *filp, char __user *buf, size_t count,
                   loff_t *f_pos)
 {
@@ -371,7 +400,8 @@ ssize_t mem_read (struct file *filp, char __user *buf, size_t count,
    return 0;
 }
 
-/* write system call is used to take in commands from the client */
+/* mem_write
+ * write system call is used to take in commands from the client */
 ssize_t mem_write (struct file *filp, const char __user *buf, size_t count,
                    loff_t *f_pos) 
 {
