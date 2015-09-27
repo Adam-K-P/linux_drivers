@@ -1,28 +1,6 @@
 /* Adam Pinarbasi
- *
- * This is a program that tests memory in two ways.
- *
- * It can test for memory corruption at an address specified by the user (with
- * a length specified by the user as well).  If a bad address is specified by 
- * the user this will almost definitely crash the computer.
- *
- * It can also test a computer under low-memory conditions.  The amount of 
- * memory to be taken can be specified, or the computer can be forced to
- * put all memory not already located in pages into swap files.  The
- * stress test functions have the potential to crash the computer if used
- * improperly by the user 
- *
- *
- * This  program is free software: you can redistribute it and/or modify it 
- * under the terms of the GNU General Public License as published by the Free
- * Software Foundation, either version 3 of the License, or (at your option) any
- * later version.  This program is distributed in the hope that it will be 
- * useful, but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General 
- * Public License for more details.  You should have received a copy of the GNU 
- * General Public License along with this program.  If not, see 
- * <http://www.gnu.org/licenses/>. */
-
+ * mem_test */
+ 
 #include <linux/module.h>
 #include <linux/moduleparam.h>
 #include <linux/init.h>
@@ -47,7 +25,6 @@ MODULE_LICENSE("Dual BSD/GPL");
 
 static u64 patterns[] = {
    //default patterns unless otherwise specified
-   //for 64 bit systems
 	0,
 	0xffffffffffffffffULL,
 	0x5555555555555555ULL,
@@ -84,8 +61,9 @@ struct file_operations mem_fops = {
    write:   mem_write, 
 };
 
-/*---------------------------------------------------------------------------*/
-// Data structures used in this module 
+/*============================================================================*/
+/* Data structures used in this module                                        */
+/*============================================================================*/
 
 struct mem_block {
    char *identifier;
@@ -104,41 +82,69 @@ struct mem_list {
 struct mem_device {
    struct mem_list *mem;
    struct cdev mem_cdev;
-   //unsigned long size;
    unsigned long nr_tests;
+   unsigned long stress_amt;
    u64 user_pattern;
-
 };
 struct mem_device mem_dev;
-//mem_dev.nr_tests = 1;
 
-/*---------------------------------------------------------------------------*/
+/*===========================================================================*/
+/* Functions for testing low memory conditions                               */
+/*===========================================================================*/
 
-/*---------------------------------------------------------------------------*/
-// Functions for testing low memory conditions
+static void amt_specified (struct mem_list *stress_list)
+{
+   unsigned int nr_pages, cnr_pages; //cnr_pages stores original value
+   unsigned int track_pgs; //used to track number of pages allocated
+   unsigned int leftover; //memory that can't be fit into pages
+   unsigned int order = 0; 
+   unsigned long address;
+   const unsigned long amount = mem_dev.stress_amt;
 
-/* The stress test is going to be performed by allocating a 
- * single page at a time.  The computer operator can then
- * see how responsive there system is when all RAM is 
- * taken and all programs are using swap files */
+   nr_pages = (unsigned int)(amount / (const unsigned long)PAGE_SIZE);
+   leftover = amount % PAGE_SIZE;
 
-static void stress_test (void) {
-   while (1) 
-      alloc_page(__GFP_NOFAIL);
+   while (nr_pages != 0) {
+      for (track_pgs = 1, cnr_pages = nr_pages;;) {
+         cnr_pages >>= 1;
+         if (cnr_pages == 0) break;
+         else {
+            ++order;
+            track_pgs <<= 1;
+         }
+         address = __get_free_pages(__GFP_HIGH, order);
+         if (address == 0)
+            printk(KERN_ERR "error allocating pages\n");
+      }
+      printk("nr_pages: %d\ntrack_pgs: %d\n", nr_pages, track_pgs);
+      nr_pages -= track_pgs;
+   }
 }
 
-/*---------------------------------------------------------------------------*/
+static void stress_test (void) 
+{
+   unsigned long address;
 
-/*---------------------------------------------------------------------------*/
-// Functions for testing memory corruption
+   struct mem_list *stress_list = kmalloc(sizeof(struct mem_list), GFP_KERNEL);
+   memset(stress_list, 0, sizeof(struct mem_list));
+
+   if (mem_dev.stress_amt != 0) 
+      amt_specified(stress_list);
+
+   else {
+      while (true) {
+         address = __get_free_page(__GFP_WAIT);
+         ++i;
+      }
+   }
+}
+
+/*===========================================================================*/
+/* Functions for testing memory corruption                                   */
+/*===========================================================================*/
 
 /* do_one_pass 
- * This is the primary function for testing memory corruption.  
- *
- * It works by simply writing a pattern to an address then reading the memory
- * at that address.  If the pattern has changed, then the memory is corrupt 
- *
- * The code is heavily borrowed from mm/memtest.c (in the Linux source code) */
+ * mm/memtest.c used as reference for this function*/
 
 static void do_one_pass (u64 pattern) 
 {
@@ -184,10 +190,9 @@ static ssize_t test_mem (void)
    return 0;
 }
 
-/*---------------------------------------------------------------------------*/
-
-/*---------------------------------------------------------------------------*/
-//Data structure manipulation functions
+/*===========================================================================*/
+/* Data structure manipulation functions                                     */
+/*===========================================================================*/
 
 static void initialize_mem_list (void) 
 {
@@ -242,12 +247,11 @@ static void add_block (unsigned long addr, unsigned long leng)
    mem_dev.mem->tail = this_block;
 }
 
-/*---------------------------------------------------------------------------*/
+/*===========================================================================*/
+/* Functions for handling user input                                         */
+/*===========================================================================*/
 
-/*---------------------------------------------------------------------------*/
-// Functions for handling user input
-
-static char *extract_digs (char *command) 
+static char *extract_comm (char *command) 
 {
    int i = 0;
    char *new_comm = kmalloc(strlen(command), GFP_KERNEL);
@@ -266,7 +270,7 @@ static char *extract_digs (char *command)
 static ssize_t handle_pattern (char *command) 
 {
    ssize_t err;
-   char *new_comm = extract_digs(command);
+   char *new_comm = extract_comm(command);
 
    if (new_comm == NULL) {
       printk(KERN_WARNING "Improper input from user\n");
@@ -283,21 +287,21 @@ static ssize_t handle_pattern (char *command)
    return 0;
 }
 
-static ssize_t handle_num (char *command) 
+static ssize_t handle_ul (char *command, unsigned long *dest) 
 {
    ssize_t err;
-   char *new_comm = extract_digs(command);
+   char *new_comm = extract_comm(command);
 
    if (new_comm == NULL) {
       printk(KERN_WARNING "Improper input from user\n");
       return -EINVAL;
    }
-   err = kstrtoul(new_comm, 0, &(mem_dev.nr_tests));
+   err = kstrtoul(new_comm, 0, dest);
    if (err < 0) {
       printk(KERN_WARNING "Improper input from user\n");
       return err;
    }
-   printk(KERN_NOTICE "%lu\n", mem_dev.nr_tests);
+   printk(KERN_NOTICE "%lu\n", *dest);
    kfree(new_comm);
    return 0;
 }
@@ -317,9 +321,9 @@ static ssize_t form_block (char *command, size_t addr_l, size_t leng_l)
       leng_s[j] = command[i + 1];
 
    err = kstrtoul(addr_s, 0, &addr);
-   if (err < 0) goto err; // ;-) Yeah
+   if (err < 0) goto err; 
    err = kstrtoul(leng_s, 0, &leng);
-   if (err < 0) goto err; // ;-) Yeah 
+   if (err < 0) goto err; 
 
    add_block(addr, leng);
    kfree(addr_s);
@@ -359,19 +363,21 @@ static ssize_t perf_comm (char *command)
    ssize_t err = 0;
 
    if      (*command == 'p') err = handle_pattern(command);
-   else if (*command == 'n') err = handle_num(command);
+   else if (*command == 'n') err = handle_ul(command, &(mem_dev.nr_tests));
    else if (*command == 'm') err = handle_mem(command);
    else if (*command == 'c') err = test_mem();
-   else if (*command == 's') stress_test();
+   else if (*command == 's') { 
+      err = handle_ul(command, &(mem_dev.stress_amt));
+      stress_test();
+   }
 
    if (err < 0) return err;
    return 0;
 }
 
-/*---------------------------------------------------------------------------*/
-
-/*---------------------------------------------------------------------------*/
-// Char-device functions
+/*===========================================================================*/
+/* Char-device functions                                                     */
+/*===========================================================================*/
 
 int mem_open (struct inode *inode, struct file *filp) 
 {
@@ -389,9 +395,10 @@ int mem_release (struct inode *inode, struct file *filp)
 }
 
 /* mem_read 
+ *
  * read system call is used to send information back to client 
-   more specifically, it will return the identifier of the last
-   mem_block added*/
+ * more specifically, it will return the identifier of the last
+ * mem_block added */
 
 ssize_t mem_read (struct file *filp, char __user *buf, size_t count,
                   loff_t *f_pos)
@@ -401,6 +408,7 @@ ssize_t mem_read (struct file *filp, char __user *buf, size_t count,
 }
 
 /* mem_write
+ *
  * write system call is used to take in commands from the client */
 ssize_t mem_write (struct file *filp, const char __user *buf, size_t count,
                    loff_t *f_pos) 
@@ -431,10 +439,9 @@ ssize_t mem_write (struct file *filp, const char __user *buf, size_t count,
    return (ssize_t)ret;
 }
 
-/*---------------------------------------------------------------------------*/
-
-/*---------------------------------------------------------------------------*/
-// Functions for loading/unloading module
+/*===========================================================================*/
+/* Functions for loading/unloading module                                    */
+/*===========================================================================*/
 
 static void mem_test_clean (void)
 {
@@ -468,8 +475,6 @@ static int __init mem_test_init (void)
    printk(KERN_NOTICE "mem_test: major number is %d\n", mem_major);
    return 0;
 }
-
-/*---------------------------------------------------------------------------*/
 
 module_init(mem_test_init);
 module_exit(mem_test_clean);
