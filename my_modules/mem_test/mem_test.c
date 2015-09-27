@@ -67,6 +67,8 @@ struct file_operations mem_fops = {
 
 struct mem_block {
    char *identifier;
+   struct page *page;
+   unsigned int order;
    unsigned long addr;
    unsigned long leng;
    struct mem_block *next;
@@ -74,7 +76,6 @@ struct mem_block {
 
 //implements list data structure of mem_blocks
 struct mem_list {
-   int length;
    struct mem_block *head;
    struct mem_block *tail;
 };
@@ -92,51 +93,71 @@ struct mem_device mem_dev;
 /* Functions for testing low memory conditions                               */
 /*===========================================================================*/
 
-static void amt_specified (struct mem_list *stress_list)
+static void amt_specified (void)
 {
    unsigned int nr_pages, cnr_pages; //cnr_pages stores original value
    unsigned int track_pgs; //used to track number of pages allocated
    unsigned int leftover; //memory that can't be fit into pages
    unsigned int order = 0; 
-   unsigned long address;
    const unsigned long amount = mem_dev.stress_amt;
+   struct page *page = NULL;
+   struct mem_block *stress_block = NULL;
 
    nr_pages = (unsigned int)(amount / (const unsigned long)PAGE_SIZE);
    leftover = amount % PAGE_SIZE;
 
    while (nr_pages != 0) {
-      for (track_pgs = 1, cnr_pages = nr_pages;;) {
+      //no log-base 2 function :(
+      for (track_pgs = 1, cnr_pages = nr_pages, order = 0;;) {
          cnr_pages >>= 1;
          if (cnr_pages == 0) break;
          else {
             ++order;
             track_pgs <<= 1;
          }
-         address = __get_free_pages(__GFP_HIGH, order);
-         if (address == 0)
-            printk(KERN_ERR "error allocating pages\n");
       }
-      printk("nr_pages: %d\ntrack_pgs: %d\n", nr_pages, track_pgs);
+      if (order) {
+         page = alloc_pages(__GFP_HIGH, order);
+         if (page == NULL) {
+            printk(KERN_ERR "error allocating pages\n");
+            return;
+         }
+         stress_block = kmalloc(sizeof(struct mem_block), GFP_KERNEL);
+         memset(stress_block, 0, sizeof(struct mem_block));
+         stress_block->page  = page;
+         stress_block->order = order;
+         stress_block->next  = NULL;
+         mem_dev.mem->tail->next = stress_block;
+         mem_dev.mem->tail = stress_block;
+      }
       nr_pages -= track_pgs;
+   }
+}
+
+static void amt_unspecified (void) 
+{
+   struct mem_block *stress_block = NULL;
+   struct page *page = NULL;
+
+   while (true) {
+      page = alloc_page(GFP_KERNEL);
+      stress_block = kmalloc(sizeof(struct mem_block), GFP_KERNEL);
+      memset(stress_block, 0, sizeof(struct mem_block));
+      stress_block->page  = page;
+      stress_block->order = 0;
+      stress_block->next  = NULL;
+      mem_dev.mem->tail->next = stress_block;
+      mem_dev.mem->tail = stress_block;
    }
 }
 
 static void stress_test (void) 
 {
-   unsigned long address;
-
-   struct mem_list *stress_list = kmalloc(sizeof(struct mem_list), GFP_KERNEL);
-   memset(stress_list, 0, sizeof(struct mem_list));
-
    if (mem_dev.stress_amt != 0) 
-      amt_specified(stress_list);
+      amt_specified();
 
-   else {
-      while (true) {
-         address = __get_free_page(__GFP_WAIT);
-         ++i;
-      }
-   }
+   else 
+      amt_unspecified();
 }
 
 /*===========================================================================*/
@@ -198,8 +219,6 @@ static void initialize_mem_list (void)
 {
    mem_dev.mem = kmalloc(sizeof(struct mem_list), GFP_KERNEL);
    memset(mem_dev.mem, 0, sizeof(struct mem_list));
-
-   mem_dev.mem->length = 0;
    mem_dev.mem->head   = NULL;
    mem_dev.mem->tail   = NULL;
 }
@@ -210,6 +229,8 @@ static void clear_list (void)
 
    while (curr != NULL) {
       struct mem_block *temp = curr;
+      if (temp->page != NULL) 
+         __free_pages(temp->page, temp->order);
       curr = curr->next;
       kfree(temp);
    }
@@ -236,6 +257,7 @@ static void add_block (unsigned long addr, unsigned long leng)
    this_block->next = NULL;
    this_block->addr = addr;
    this_block->leng = leng;
+   this_block->page = NULL;
 
    if (mem_dev.mem->head == NULL) {
       mem_dev.mem->head = this_block;
