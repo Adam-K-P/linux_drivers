@@ -116,17 +116,18 @@ static void handle_fail (unsigned int order)
    struct page *page = NULL;
    unsigned int i;
 
-   while (true) {
-      new_order >>= 1;
-      nr_allocs <<= 1;
-      printk(KERN_NOTICE "new_order: %d\n", new_order);
+   while (page == NULL) {
       if (new_order == 0) {
          printk(KERN_WARNING "cannot perform memory allocation\n");
          return;
       }
+      new_order -= 1;
+      nr_allocs <<= 1;
+      printk(KERN_NOTICE "new_order: %d\nnr_allocs: %d\n", new_order, 
+                                                           nr_allocs);
       for (i = 0; i < nr_allocs; ++i) {
          page = NULL;
-         page = alloc_pages(__GFP_HIGH | __GFP_NOFAIL, new_order);
+         page = alloc_pages(__GFP_HIGH | __GFP_REPEAT, new_order);
          if (page == NULL) break;
          add_stress_block(page, new_order);
       }
@@ -146,7 +147,7 @@ static void amt_specified (void)
    leftover = amount % PAGE_SIZE;
 
    while (nr_pages != 0) {
-      //no log-base 2 function :(
+      //no log base-2 function :(
       for (track_pgs = 1, cnr_pages = nr_pages, order = 0;;) {
          cnr_pages >>= 1;
          if (cnr_pages == 0) break;
@@ -156,7 +157,7 @@ static void amt_specified (void)
          }
       }
       if (order) {
-         page = alloc_pages(__GFP_HIGH | __GFP_NOFAIL, order);
+         page = alloc_pages(__GFP_HIGH | __GFP_REPEAT, order);
          if (page == NULL) 
             handle_fail(order);
          else 
@@ -170,18 +171,19 @@ static void amt_unspecified (void)
 {
    struct page *page = NULL;
 
-   current->flags = PF_MEMALLOC;
+   //basically puts a lot of process memory into swap files
    while (true) {
-      page = alloc_page(GFP_KERNEL);
+      page = alloc_page(__GFP_NORETRY);
+      if (page == NULL) break; //I think that's enough :)
       add_stress_block(page, 0);
    }
 }
 
 static void stress_test (void) 
 {
+   current->flags = PF_MEMALLOC; //task is used to allocate memory
    if (mem_dev.stress_amt != 0) 
       amt_specified();
-
    else 
       amt_unspecified();
 }
@@ -436,6 +438,7 @@ int mem_open (struct inode *inode, struct file *filp)
 
 int mem_release (struct inode *inode, struct file *filp)
 {
+   current->flags = PF_LESS_THROTTLE; //for cleaning memory
    printk(KERN_NOTICE "Closing file\n");
    print_blocks();
    clear_list();
