@@ -93,6 +93,17 @@ struct mem_device mem_dev;
 /* Functions for testing low memory conditions                               */
 /*===========================================================================*/
 
+static void add_stress_block (struct page *page, unsigned int order)
+{
+   struct mem_block *stress_block = kmalloc(sizeof(struct mem_block), GFP_KERNEL);
+   memset(stress_block, 0, sizeof(struct mem_block));
+   stress_block->page  = page;
+   stress_block->order = order;
+   stress_block->next  = NULL;
+   mem_dev.mem->tail->next = stress_block;
+   mem_dev.mem->tail = stress_block;
+}
+
 static void amt_specified (void)
 {
    unsigned int nr_pages, cnr_pages; //cnr_pages stores original value
@@ -101,7 +112,6 @@ static void amt_specified (void)
    unsigned int order = 0; 
    const unsigned long amount = mem_dev.stress_amt;
    struct page *page = NULL;
-   struct mem_block *stress_block = NULL;
 
    nr_pages = (unsigned int)(amount / (const unsigned long)PAGE_SIZE);
    leftover = amount % PAGE_SIZE;
@@ -122,13 +132,8 @@ static void amt_specified (void)
             printk(KERN_ERR "error allocating pages\n");
             return;
          }
-         stress_block = kmalloc(sizeof(struct mem_block), GFP_KERNEL);
-         memset(stress_block, 0, sizeof(struct mem_block));
-         stress_block->page  = page;
-         stress_block->order = order;
-         stress_block->next  = NULL;
-         mem_dev.mem->tail->next = stress_block;
-         mem_dev.mem->tail = stress_block;
+         add_stress_block(page, order);
+         printk("order: %d\n", order);
       }
       nr_pages -= track_pgs;
    }
@@ -136,18 +141,11 @@ static void amt_specified (void)
 
 static void amt_unspecified (void) 
 {
-   struct mem_block *stress_block = NULL;
    struct page *page = NULL;
 
    while (true) {
       page = alloc_page(GFP_KERNEL);
-      stress_block = kmalloc(sizeof(struct mem_block), GFP_KERNEL);
-      memset(stress_block, 0, sizeof(struct mem_block));
-      stress_block->page  = page;
-      stress_block->order = 0;
-      stress_block->next  = NULL;
-      mem_dev.mem->tail->next = stress_block;
-      mem_dev.mem->tail = stress_block;
+      add_stress_block(page, 0);
    }
 }
 
