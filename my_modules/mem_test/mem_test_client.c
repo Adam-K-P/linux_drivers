@@ -48,7 +48,7 @@ static void print_help (void)
           "'c' allows the user to test for corruption\n"
           "ex: c1a\n"
           "will test memory block 1a for corruption\n"
-          "------------------------------------------------------------\n\n");
+          "============================================================\n\n");
 }
 
 static void primary_loop (const int device) 
@@ -72,18 +72,18 @@ static void primary_loop (const int device)
 
       //include null byte?
       if (write(device, (const void *)input, strlen(input) + 1) < 0)
-         error("test_memory", "error writing to file");
+         error("primary_loop", "error writing to file");
       free(input);
    }
 }
 
 static void print_greeting (void) 
 {
-   printf("\n\n------------------------------------------------------------\n"
-          "Welcome to mem_test: a program for testing memory corruption\n"
+   printf("\n\n==============================================================\n"
+          "Welcome to mem_test: a program for testing memory performance\n"
           "To get a list of commands type in 'help'\n"
           "Written by Adam Pinarbasi\n"
-          "------------------------------------------------------------\n\n");
+          "==============================================================\n\n");
 }
 
 int main (void) 

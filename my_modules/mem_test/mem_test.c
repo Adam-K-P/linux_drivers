@@ -1,6 +1,7 @@
 /* Adam Pinarbasi
  * mem_test */
  
+#include <linux/sched.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>
 #include <linux/init.h>
@@ -100,8 +101,36 @@ static void add_stress_block (struct page *page, unsigned int order)
    stress_block->page  = page;
    stress_block->order = order;
    stress_block->next  = NULL;
-   mem_dev.mem->tail->next = stress_block;
+   if (mem_dev.mem->head == NULL) 
+      mem_dev.mem->head = stress_block;
+   else 
+      mem_dev.mem->tail->next = stress_block;
    mem_dev.mem->tail = stress_block;
+}
+
+/* Attempts to perform the same allocation with a lower order */
+static void handle_fail (unsigned int order) 
+{
+   unsigned int new_order = order;
+   unsigned int nr_allocs = 1;
+   struct page *page = NULL;
+   unsigned int i;
+
+   while (true) {
+      new_order >>= 1;
+      nr_allocs <<= 1;
+      printk(KERN_NOTICE "new_order: %d\n", new_order);
+      if (new_order == 0) {
+         printk(KERN_WARNING "cannot perform memory allocation\n");
+         return;
+      }
+      for (i = 0; i < nr_allocs; ++i) {
+         page = NULL;
+         page = alloc_pages(__GFP_HIGH | __GFP_NOFAIL, new_order);
+         if (page == NULL) break;
+         add_stress_block(page, new_order);
+      }
+   }
 }
 
 static void amt_specified (void)
@@ -127,13 +156,11 @@ static void amt_specified (void)
          }
       }
       if (order) {
-         page = alloc_pages(__GFP_HIGH, order);
-         if (page == NULL) {
-            printk(KERN_ERR "error allocating pages\n");
-            return;
-         }
-         add_stress_block(page, order);
-         printk("order: %d\n", order);
+         page = alloc_pages(__GFP_HIGH | __GFP_NOFAIL, order);
+         if (page == NULL) 
+            handle_fail(order);
+         else 
+            add_stress_block(page, order);
       }
       nr_pages -= track_pgs;
    }
@@ -143,6 +170,7 @@ static void amt_unspecified (void)
 {
    struct page *page = NULL;
 
+   current->flags = PF_MEMALLOC;
    while (true) {
       page = alloc_page(GFP_KERNEL);
       add_stress_block(page, 0);
