@@ -127,7 +127,9 @@ static void handle_fail (unsigned int order)
                                                            nr_allocs);
       for (i = 0; i < nr_allocs; ++i) {
          page = NULL;
-         page = alloc_pages(__GFP_HIGH | __GFP_REPEAT, new_order);
+         page = alloc_pages(__GFP_HIGH | __GFP_REPEAT | 
+                            __GFP_HIGHMEM | __GFP_DMA, 
+                            new_order);
          if (page == NULL) break;
          add_stress_block(page, new_order);
       }
@@ -138,16 +140,12 @@ static void amt_specified (void)
 {
    unsigned int nr_pages, cnr_pages; //cnr_pages stores original value
    unsigned int track_pgs; //used to track number of pages allocated
-   unsigned int leftover; //memory that can't be fit into pages
    unsigned int order = 0; 
    const unsigned long amount = mem_dev.stress_amt;
    struct page *page = NULL;
 
    nr_pages = (unsigned int)(amount / (const unsigned long)PAGE_SIZE);
-   leftover = amount % PAGE_SIZE;
-
    while (nr_pages != 0) {
-      //no log base-2 function :(
       for (track_pgs = 1, cnr_pages = nr_pages, order = 0;;) {
          cnr_pages >>= 1;
          if (cnr_pages == 0) break;
@@ -157,7 +155,9 @@ static void amt_specified (void)
          }
       }
       if (order) {
-         page = alloc_pages(__GFP_HIGH | __GFP_REPEAT, order);
+         page = alloc_pages(__GFP_HIGH | __GFP_REPEAT |
+                            __GFP_HIGHMEM | __GFP_DMA, 
+                            order);
          if (page == NULL) 
             handle_fail(order);
          else 
@@ -174,7 +174,7 @@ static void amt_unspecified (void)
    //basically puts a lot of process memory into swap files
    while (true) {
       page = alloc_page(__GFP_NORETRY);
-      if (page == NULL) break; //I think that's enough :)
+      if (page == NULL) break; 
       add_stress_block(page, 0);
    }
 }
@@ -397,7 +397,6 @@ static ssize_t handle_mem (char *command)
       else if (space == 0) ++addr_l;
       else ++leng_l;
    }
-
    if (space == 0) goto err;
    err = form_block(command, addr_l, leng_l);
    if (err < 0) goto err;
