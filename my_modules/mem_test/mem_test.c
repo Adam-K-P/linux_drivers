@@ -173,7 +173,7 @@ static void amt_unspecified (void)
 
    //basically puts a lot of process memory into swap files
    while (true) {
-      page = alloc_page(__GFP_NORETRY);
+      page = alloc_page(__GFP_HIGH | __GFP_REPEAT | __GFP_HIGHMEM | __GFP_DMA);
       if (page == NULL) break; 
       add_stress_block(page, 0);
    }
