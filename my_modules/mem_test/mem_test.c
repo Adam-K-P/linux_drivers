@@ -1,5 +1,9 @@
 /* Adam Pinarbasi
  * mem_test */
+
+/* TODO
+ * No more allocating total system memory.
+ * Instead test all the system memory for mem-corruption */
  
 #include <linux/sched.h>
 #include <linux/module.h>
@@ -20,6 +24,8 @@
 #include <linux/uaccess.h>
 #include <asm/uaccess.h>
 #include <asm/page.h>
+
+#define OPTIONS (__GFP_HIGH | __GFP_REPEAT | __GFP_HIGHMEM | __GFP_DMA)
 
 MODULE_AUTHOR("Adam Pinarbasi");
 MODULE_LICENSE("Dual BSD/GPL"); 
@@ -127,9 +133,7 @@ static void handle_fail (unsigned int order)
                                                            nr_allocs);
       for (i = 0; i < nr_allocs; ++i) {
          page = NULL;
-         page = alloc_pages(__GFP_HIGH | __GFP_REPEAT | 
-                            __GFP_HIGHMEM | __GFP_DMA, 
-                            new_order);
+         page = alloc_pages(OPTIONS, new_order);
          if (page == NULL) break;
          add_stress_block(page, new_order);
       }
@@ -155,9 +159,7 @@ static void amt_specified (void)
          }
       }
       if (order) {
-         page = alloc_pages(__GFP_HIGH | __GFP_REPEAT |
-                            __GFP_HIGHMEM | __GFP_DMA, 
-                            order);
+         page = alloc_pages(OPTIONS, order);
          if (page == NULL) 
             handle_fail(order);
          else 
@@ -173,7 +175,7 @@ static void amt_unspecified (void)
 
    //basically puts a lot of process memory into swap files
    while (true) {
-      page = alloc_page(__GFP_HIGH | __GFP_REPEAT | __GFP_HIGHMEM | __GFP_DMA);
+      page = alloc_page(OPTIONS);
       if (page == NULL) break; 
       add_stress_block(page, 0);
    }
